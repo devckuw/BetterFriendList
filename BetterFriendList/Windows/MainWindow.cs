@@ -31,6 +31,10 @@ using Lumina.Text;
 using Lumina.Text.Payloads;
 using Lumina.Text.ReadOnly;
 
+using BetterFriendList.GameFuntions;
+using Dalamud.Game.ClientState.Objects.SubKinds;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
+
 namespace BetterFriendList.Windows;
 
 public unsafe class MainWindow : Window, IDisposable
@@ -58,6 +62,12 @@ public unsafe class MainWindow : Window, IDisposable
     }
 
     public void Dispose() { }
+
+    private unsafe ulong GetContentId(IPlayerCharacter player)
+    {
+        var chara = (Character*)player.Address;
+        return chara == null ? 0 : chara->ContentId;
+    }
 
     public override void Draw()
     {
@@ -117,7 +127,7 @@ public unsafe class MainWindow : Window, IDisposable
         {
             ImGui.TableSetupColumn("Grp");
             ImGui.TableSetupColumn("Name");
-            ImGui.TableSetupColumn("Tp");
+            ImGui.TableSetupColumn("Action");
             //ImGui.TableSetupColumn("ContentID");
             ImGui.TableSetupColumn("Job");
             ImGui.TableSetupColumn("Location");
@@ -127,7 +137,19 @@ public unsafe class MainWindow : Window, IDisposable
             ImGui.TableHeadersRow();
 
             //Plugin.Log.Debug($"{agent->InfoProxy->EntryCount}");
-
+            string playerDataCenter = "";
+            ushort playerWorld = 0;
+            bool isLeader = true;
+            if (Plugin.ClientState.LocalPlayer != null)
+            {
+                playerWorld = (ushort)Plugin.ClientState.LocalPlayer.CurrentWorld.RowId;
+                playerDataCenter = Plugin.ClientState.LocalPlayer.CurrentWorld.Value.DataCenter.Value.Name.ExtractText();
+            }
+            if (Plugin.PartyList != null && Plugin.ClientState.LocalPlayer != null)
+            {
+                if (Plugin.PartyList.Count > 1)
+                    isLeader = Plugin.PartyList[(int)Plugin.PartyList.PartyLeaderIndex].ContentId == (long)GetContentId(Plugin.ClientState.LocalPlayer); 
+            }
             for (var i = 0U; i < agent->InfoProxy->EntryCount; i++)
             {
                 var friend = agent->InfoProxy->GetEntry(i);
@@ -136,6 +158,7 @@ public unsafe class MainWindow : Window, IDisposable
                 ImGui.TableNextRow();
 
                 var name = friend->NameString;
+                Plugin.DataManager.GetExcelSheet<World>().TryGetRow(friend->CurrentWorld, out var friendCurrentWorld);
                 var aname = friend->Group;
                 ImGui.TableNextColumn();
                 switch (friend->Group)
@@ -271,29 +294,77 @@ public unsafe class MainWindow : Window, IDisposable
                         {
                             agent->OpenFriendEstateTeleportation(friend->ContentId);
                         }
+                        //ImGui.SameLine();
                     }
                 }
                 if (houseFlag)
                 {
                     //ImGuiComponents.IconButton($"buttontphouse{i}", FontAwesomeIcon.None/*, new Vector2(20, 20)*/);
+                    ImGui.Text("         ");
                 }
                 ImGui.SameLine();
-                if (friend->Location == 0 || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeader) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMember) ||
+                if (friend->State == 0 || !friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter) ||
+                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeader) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMember) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeaderCrossWorld) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMemberCrossWorld) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyLeader) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember) ||
-                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember))
+                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld) ||
+                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy) || !isLeader)
                 {
                     //ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.None/*, new Vector2(20, 20)*/);
+                    ImGui.Text("         ");
                 }
                 else
                 {
-                    if (ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.PeopleGroup/*, new Vector2(20, 20)*/))
+                    if (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers))
                     {
-                        //invite;
+                        if (ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.UsersViewfinder/*, new Vector2(20, 20)*/))
+                        {
+                            GameFuntions.GameFuntions.OpenPartyFinder();
+                        }
+                    }
+                    else
+                    {
+                        if (ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.PeopleGroup/*, new Vector2(20, 20)*/))
+                        {
+                            //invite;
+                            if (friend->CurrentWorld  == playerWorld)
+                            {
+                                GameFuntions.GameFuntions.InviteSameWorld(friend->NameString, friend->CurrentWorld, friend->ContentId);
+                            }
+                            else
+                            {
+                                GameFuntions.GameFuntions.InviteOtherWorld(friend->ContentId, friend->CurrentWorld);
+                            }
+                        }
                     }
                 }
-                /*ImGui.SameLine();
-                ImGui.Text($"{friend->State} {(ulong)friend->State}");*/
+                ImGui.SameLine();
+                if (friend->State == 0 || !friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter) ||
+                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy))
+                {
+                    ImGui.Text("         ");
+                }
+                else
+                {
+                    if (ImGuiComponents.IconButton($"buttondm{i}", FontAwesomeIcon.Comment/*, new Vector2(20, 20)*/))
+                    {
+                        //dm;
+                    }
+                }
+                ImGui.SameLine();
+                if (!friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter))
+                {
+                    ImGui.Text("         ");
+                }
+                else
+                {
+                    if (ImGuiComponents.IconButton($"buttonadventurer{i}", FontAwesomeIcon.ListAlt/*, new Vector2(20, 20)*/))
+                    {
+                        GameFuntions.GameFuntions.TryOpenAdventurerPlate(friend->ContentId);
+                    }
+                }
+                //ImGui.SameLine();
+                //ImGui.Text($"{friend->State} {(ulong)friend->State}");
                 /*ImGui.TableNextColumn();
                 ImGui.Text($"{friend->ContentId:X}");*/
 
@@ -326,14 +397,13 @@ public unsafe class MainWindow : Window, IDisposable
                 {
                     //ImGui.TextDisabled($"Unknown");
                     //ImGui.TextDisabled($"{friend->CurrentWorld}");
-                    Plugin.DataManager.GetExcelSheet<World>().TryGetRow(friend->CurrentWorld, out var world);
                     if (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
                     {
-                        ImGui.Text($"{world.Name}");
+                        ImGui.Text($"{friendCurrentWorld.Name}");
                     }
                     else
                     {
-                        ImGui.TextDisabled($"{world.Name}");
+                        ImGui.TextDisabled($"{friendCurrentWorld.Name}");
                     }
                 }
                 else
@@ -357,6 +427,9 @@ public unsafe class MainWindow : Window, IDisposable
                         ImGuiHelpers.CompileSeStringWrapped($"{friend->FCTagString}");
                         break;
                 }
+                //ImGui.SameLine();
+                //ImGui.Text($"{(long)friend + 0x20:X} {friend->ExtraFlags}");
+                //ImGui.Text($"{(long)friend + 0x24:X}");
                 /*var fcTag = friend->FCTagString;
                 ImGui.Text($"{friend->GrandCompany} {fcTag}");*/
 
