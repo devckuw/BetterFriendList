@@ -7,10 +7,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static FFXIVClientStructs.FFXIV.Component.GUI.AtkEventDispatcher;
 
-namespace BetterFriendList.GameFuntions;
+namespace BetterFriendList.GameAddon;
 
-public static unsafe class GameFuntions
+public static unsafe class GameFunctions
 {
     internal static byte[] ToTerminatedBytes(this string s)
     {
@@ -58,6 +59,27 @@ public static unsafe class GameFuntions
         InfoProxyPartyInvite.Instance()->InviteToPartyContentId(contentId, worldId);
     }
 
+    // return listingId of the pf own by the player with certain contentId
+    internal static uint FindPartyFinder(ulong contentId)
+    {
+        var agent = AgentLookingForGroup.Instance();
+        var addr = (ulong)agent + 0x3172;
+        //Plugin.Log.Debug($"{addr:X}");
+        var count = *((byte*)addr);
+        //Plugin.Log.Debug($"{count}");
+        
+        /*for (var i = 0; i < count; i++)
+        {
+            var pf = agent->Listings.ListingIds[i];
+            if (pf == 0)
+                return 0;
+            agent->OpenListing(pf);
+            if (agent->LastViewedListing.LeaderContentId == contentId)
+                return agent->LastViewedListing.ListingId;
+        }*/
+        return 0;
+    }
+
     internal static void OpenPartyFinder(uint id)
     {
         AgentLookingForGroup.Instance()->OpenListing(id);
@@ -98,4 +120,10 @@ public static unsafe class GameFuntions
             return false;
         }
     }
+
+    internal static void OpenSearchInfo(InfoProxyCommonList.CharacterData* characterData)
+    {
+        AgentDetail.Instance()->OpenForCharacterData(characterData);
+    }
+
 }

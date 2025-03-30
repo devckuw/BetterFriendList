@@ -31,9 +31,12 @@ using Lumina.Text;
 using Lumina.Text.Payloads;
 using Lumina.Text.ReadOnly;
 
-using BetterFriendList.GameFuntions;
+using BetterFriendList.GameAddon;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using Dalamud.Plugin.Services;
 
 namespace BetterFriendList.Windows;
 
@@ -42,6 +45,9 @@ public unsafe class MainWindow : Window, IDisposable
     private Plugin Plugin;
     private SeStringDrawParams style;
     private bool useEntity;
+
+    private string dmTargetName = string.Empty;
+    private string dmTargetWorld = string.Empty;
 
     // We give this window a hidden ID using ##
     // So that the user will see "My Amazing Window" as window title,
@@ -58,10 +64,23 @@ public unsafe class MainWindow : Window, IDisposable
         Plugin = plugin;
         useEntity = true;
         this.style = new() { GetEntity = this.GetEntity };
-
+        Plugin.Framework.Update += OnUpdate;
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+        Plugin.Framework.Update -= OnUpdate;
+    }
+
+    private void OnUpdate(IFramework framework)
+    {
+        if (dmTargetName != string.Empty && dmTargetWorld != string.Empty)
+        {
+            ChatHelper.SetChatDM(dmTargetName, dmTargetWorld);
+            dmTargetName = string.Empty;
+            dmTargetWorld = string.Empty;
+        }
+    }
 
     private unsafe ulong GetContentId(IPlayerCharacter player)
     {
@@ -106,7 +125,33 @@ public unsafe class MainWindow : Window, IDisposable
         {
             Plugin.Log.Debug("update request?");
             agent->InfoProxy->RequestData();
+            Plugin.Log.Debug("reset data request?");
+            PartyFinderData.ResetData();
+            Plugin.Log.Debug("refresh pf request?");
+            PartyFinderData.RefreshListing();
         }
+
+        ImGui.SameLine();
+        if (ImGui.Button("check lvl"))
+        {
+            GameFunctions.FindPartyFinder(0);
+            /*var friendList = (AddonFriendList*)Plugin.GameGui.GetAddonByName("FriendList");
+            if (friendList != null)
+                Plugin.Log.Debug($"{friendList->FriendList->UldManager.NodeListCount} {friendList->Id}");*/
+        }
+        ImGui.SameLine();
+        if (ImGui.Button("check socialb"))
+        {
+            //open last context menu
+            //AgentContext.Instance()->OpenContextMenu();
+
+            //GameFuntions.GameFuntions.OpenPartyFinder();
+            //uint pfId = AgentLookingForGroup.Instance()->Listings.ListingIds
+            GameFunctions.OpenPartyFinder(28212);
+        }
+        ImGui.SameLine();
+        ImGui.Text($"{PartyFinderData.Instance.data.Count}");
+            
         //ImGuiHelpers.CompileSeStringWrapped($"<icon(56)>");
         //ImGuiHelpers.CompileSeStringWrapped($"<icon(56)> <Gui(12)/> Lorem ipsum dolor <colortype(504)><edgecolortype(505)>sit<colortype(0)><edgecolortype(0)> <italic(1)>amet,<italic(0)> <colortype(500)><edgecolortype(501)>conse<->ctetur<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)><italic(1)>adipi<-><colortype(504)><edgecolortype(505)>scing<colortype(0)><edgecolortype(0)><italic(0)><colortype(0)><edgecolortype(0)> elit. <colortype(502)><edgecolortype(503)>Maece<->nas<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>digni<-><colortype(504)><edgecolortype(505)>ssim<colortype(0)><edgecolortype(0)><colortype(0)><edgecolortype(0)> <colortype(504)><edgecolortype(505)>sem<colortype(0)><edgecolortype(0)> <italic(1)>at<italic(0)> inter<->dum <colortype(500)><edgecolortype(501)>ferme<->ntum.<colortype(0)><edgecolortype(0)> Praes<->ent <colortype(500)><edgecolortype(501)>ferme<->ntum<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>conva<->llis<colortype(0)><edgecolortype(0)> velit <colortype(504)><edgecolortype(505)>sit<colortype(0)><edgecolortype(0)> <italic(1)>amet<italic(0)> <colortype(500)><edgecolortype(501)>hendr<->erit.<colortype(0)><edgecolortype(0)> <colortype(504)><edgecolortype(505)>Sed<colortype(0)><edgecolortype(0)> eu nibh <colortype(502)><edgecolortype(503)>magna.<colortype(0)><edgecolortype(0)> Integ<->er nec lacus in velit porta euism<->od <colortype(504)><edgecolortype(505)>sed<colortype(0)><edgecolortype(0)> et lacus. <colortype(504)><edgecolortype(505)>Sed<colortype(0)><edgecolortype(0)> non <colortype(502)><edgecolortype(503)>mauri<->s<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>venen<-><italic(1)>atis,<colortype(0)><edgecolortype(0)><italic(0)> <colortype(502)><edgecolortype(503)>matti<->s<colortype(0)><edgecolortype(0)> <colortype(502)><edgecolortype(503)>metus<colortype(0)><edgecolortype(0)> in, <italic(1)>aliqu<->et<italic(0)> dolor. <italic(1)>Aliqu<->am<italic(0)> erat <colortype(500)><edgecolortype(501)>volut<->pat.<colortype(0)><edgecolortype(0)> Nulla <colortype(500)><edgecolortype(501)>venen<-><italic(1)>atis<colortype(0)><edgecolortype(0)><italic(0)> velit <italic(1)>ac<italic(0)> <colortype(504)><edgecolortype(505)><colortype(516)><edgecolortype(517)>sus<colortype(0)><edgecolortype(0)>ci<->pit<colortype(0)><edgecolortype(0)> euism<->od. <colortype(500)><edgecolortype(501)><colortype(504)><edgecolortype(505)><colortype(516)><edgecolortype(517)>sus<colortype(0)><edgecolortype(0)>pe<->ndisse<colortype(0)><edgecolortype(0)><colortype(0)><edgecolortype(0)> <colortype(502)><edgecolortype(503)>maxim<->us<colortype(0)><edgecolortype(0)> viver<->ra dui id dapib<->us. Nam torto<->r dolor, <colortype(500)><edgecolortype(501)>eleme<->ntum<colortype(0)><edgecolortype(0)> quis orci id, pulvi<->nar <colortype(500)><edgecolortype(501)>fring<->illa<colortype(0)><edgecolortype(0)> quam. <colortype(500)><edgecolortype(501)>Pelle<->ntesque<colortype(0)><edgecolortype(0)> laore<->et viver<->ra torto<->r eget <colortype(502)><edgecolortype(503)>matti<-><colortype(504)><edgecolortype(505)>s.<colortype(0)><edgecolortype(0)><colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>Vesti<-><bold(1)>bulum<colortype(0)><edgecolortype(0)><bold(0)> eget porta <italic(1)>ante,<italic(0)> a <colortype(502)><edgecolortype(503)>molli<->s<colortype(0)><edgecolortype(0)> nulla. <colortype(500)><edgecolortype(501)>Curab<->itur<colortype(0)><edgecolortype(0)> a ligul<->a leo. <italic(1)>Aliqu<->am<italic(0)> volut<->pat <colortype(504)><edgecolortype(505)>sagit<->tis<colortype(0)><edgecolortype(0)> dapib<->us.");
         /*for (int i = 1; i < 173; i++)
@@ -140,6 +185,7 @@ public unsafe class MainWindow : Window, IDisposable
             string playerDataCenter = "";
             ushort playerWorld = 0;
             bool isLeader = true;
+            bool isMemberCross = false;
             if (Plugin.ClientState.LocalPlayer != null)
             {
                 playerWorld = (ushort)Plugin.ClientState.LocalPlayer.CurrentWorld.RowId;
@@ -148,8 +194,28 @@ public unsafe class MainWindow : Window, IDisposable
             if (Plugin.PartyList != null && Plugin.ClientState.LocalPlayer != null)
             {
                 if (Plugin.PartyList.Count > 1)
-                    isLeader = Plugin.PartyList[(int)Plugin.PartyList.PartyLeaderIndex].ContentId == (long)GetContentId(Plugin.ClientState.LocalPlayer); 
+                    isLeader = Plugin.PartyList[(int)Plugin.PartyList.PartyLeaderIndex].ContentId == (long)GetContentId(Plugin.ClientState.LocalPlayer);
+
+                if (InfoProxyCrossRealm.IsCrossRealmParty())
+                {
+                    //Plugin.Log.Debug("is crossparty");
+                    if (InfoProxyCrossRealm.GetMemberByContentId((ulong)GetContentId(Plugin.ClientState.LocalPlayer))->IsPartyLeader != 0)
+                    {
+                        //Plugin.Log.Debug("is leader");
+                    }
+                    else
+                    {
+                        //Plugin.Log.Debug("is not leader"); 
+                        isMemberCross = true;
+                    }
+                }
+                /*else
+                {
+                    Plugin.Log.Debug("is not crossparty");
+                }*/
             }
+              
+            
             for (var i = 0U; i < agent->InfoProxy->EntryCount; i++)
             {
                 var friend = agent->InfoProxy->GetEntry(i);
@@ -159,6 +225,7 @@ public unsafe class MainWindow : Window, IDisposable
 
                 var name = friend->NameString;
                 Plugin.DataManager.GetExcelSheet<World>().TryGetRow(friend->CurrentWorld, out var friendCurrentWorld);
+                Plugin.DataManager.GetExcelSheet<World>().TryGetRow(friend->HomeWorld, out var friendHomeWorld);
                 var aname = friend->Group;
                 ImGui.TableNextColumn();
                 switch (friend->Group)
@@ -305,10 +372,11 @@ public unsafe class MainWindow : Window, IDisposable
                 ImGui.SameLine();
                 if (friend->State == 0 || !friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeader) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMember) ||
-                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeaderCrossWorld) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMemberCrossWorld) ||
+                    (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeaderCrossWorld) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) || 
+                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMemberCrossWorld) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyLeader) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld) ||
-                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy) || !isLeader)
+                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy) || !isLeader || isMemberCross)
                 {
                     //ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.None/*, new Vector2(20, 20)*/);
                     ImGui.Text("         ");
@@ -319,7 +387,9 @@ public unsafe class MainWindow : Window, IDisposable
                     {
                         if (ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.UsersViewfinder/*, new Vector2(20, 20)*/))
                         {
-                            GameFuntions.GameFuntions.OpenPartyFinder();
+                            var id = PartyFinderData.GetData(friend->ContentId);
+                            if (id != null)
+                                GameFunctions.OpenPartyFinder(id.Id);
                         }
                     }
                     else
@@ -329,11 +399,11 @@ public unsafe class MainWindow : Window, IDisposable
                             //invite;
                             if (friend->CurrentWorld  == playerWorld)
                             {
-                                GameFuntions.GameFuntions.InviteSameWorld(friend->NameString, friend->CurrentWorld, friend->ContentId);
+                                GameFunctions.InviteSameWorld(friend->NameString, friend->CurrentWorld, friend->ContentId);
                             }
                             else
                             {
-                                GameFuntions.GameFuntions.InviteOtherWorld(friend->ContentId, friend->CurrentWorld);
+                                GameFunctions.InviteOtherWorld(friend->ContentId, friend->CurrentWorld);
                             }
                         }
                     }
@@ -348,7 +418,8 @@ public unsafe class MainWindow : Window, IDisposable
                 {
                     if (ImGuiComponents.IconButton($"buttondm{i}", FontAwesomeIcon.Comment/*, new Vector2(20, 20)*/))
                     {
-                        //dm;
+                        dmTargetName = friend->NameString;
+                        dmTargetWorld = friendHomeWorld.Name.ExtractText();
                     }
                 }
                 ImGui.SameLine();
@@ -360,11 +431,25 @@ public unsafe class MainWindow : Window, IDisposable
                 {
                     if (ImGuiComponents.IconButton($"buttonadventurer{i}", FontAwesomeIcon.ListAlt/*, new Vector2(20, 20)*/))
                     {
-                        GameFuntions.GameFuntions.TryOpenAdventurerPlate(friend->ContentId);
+                        GameFunctions.TryOpenAdventurerPlate(friend->ContentId);
                     }
                 }
+                ImGui.SameLine(); 
+                if (friend->CurrentWorld != playerWorld)
+                {
+                    ImGui.Text("         ");
+                }
+                else
+                {
+                    if (ImGuiComponents.IconButton($"buttoninfo{i}", FontAwesomeIcon.Info/*, new Vector2(20, 20)*/))
+                    {
+                        GameFunctions.OpenSearchInfo(friend);
+                    }
+                }
+
+
                 //ImGui.SameLine();
-                //ImGui.Text($"{friend->State} {(ulong)friend->State}");
+                //ImGui.Text($"{friend->State} {(long)friend:X} {friend->ContentId:X}");
                 /*ImGui.TableNextColumn();
                 ImGui.Text($"{friend->ContentId:X}");*/
 

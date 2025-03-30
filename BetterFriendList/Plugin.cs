@@ -7,6 +7,8 @@ using Dalamud.Interface.Internal;
 using Dalamud.Plugin.Services;
 using BetterFriendList.Windows;
 using Dalamud.Storage.Assets;
+using BetterFriendList.GameAddon;
+using Dalamud.Game;
 
 namespace BetterFriendList;
 
@@ -21,6 +23,10 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
     [PluginService] internal static IGameGui GameGui { get; private set; } = null!;
+    [PluginService] public static ISigScanner SigScanner { get; private set; } = null!;
+    [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
+    [PluginService] public static IFramework Framework { get; private set; } = null!;
+    [PluginService] public static IPartyFinderGui PartyFinderGui { get; private set; } = null!;
 
     private const string CommandName = "/betterfriendlist";
 
@@ -48,6 +54,9 @@ public sealed class Plugin : IDalamudPlugin
             HelpMessage = "A useful message to display in /xlhelp"
         });
 
+        ChatHelper.Initialize();
+        PartyFinderData.Initialize();
+
         PluginInterface.UiBuilder.Draw += DrawUI;
 
         // This adds a button to the plugin installer entry of this plugin which allows
@@ -65,6 +74,9 @@ public sealed class Plugin : IDalamudPlugin
 
     public void Dispose()
     {
+        ChatHelper.Instance?.Dispose();
+        PartyFinderData.Instance?.Dispose();
+
         WindowSystem.RemoveAllWindows();
 
         ConfigWindow.Dispose();
