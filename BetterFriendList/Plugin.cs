@@ -9,6 +9,7 @@ using BetterFriendList.Windows;
 using Dalamud.Storage.Assets;
 using BetterFriendList.GameAddon;
 using Dalamud.Game;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 namespace BetterFriendList;
 
@@ -94,5 +95,20 @@ public sealed class Plugin : IDalamudPlugin
     private void DrawUI() => WindowSystem.Draw();
 
     public void ToggleConfigUI() => ConfigWindow.Toggle();
-    public void ToggleMainUI() => MainWindow.Toggle();
+    public unsafe void ToggleMainUI()
+    {
+        this.MainWindow.Toggle();
+        if (MainWindow.IsOpen && Configuration.RefreshFriendOnOpen)
+        {
+            Plugin.Log.Debug("Refresh Friend List Start");
+            var agent = AgentFriendlist.Instance();
+            if (agent == null) return;
+
+            if (agent->InfoProxy == null) return;
+
+            Plugin.Log.Debug("update request?");
+            agent->InfoProxy->RequestData();
+            Plugin.Log.Debug("Refresh Friend List End");
+        }
+    }
 }

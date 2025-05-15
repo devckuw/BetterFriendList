@@ -49,16 +49,21 @@ public unsafe class MainWindow : Window, IDisposable
     private string dmTargetName = string.Empty;
     private string dmTargetWorld = string.Empty;
 
+    private int grpDisplay = (int)Grp.All;
+    private string nameRegex = string.Empty;
+
     // We give this window a hidden ID using ##
     // So that the user will see "My Amazing Window" as window title,
     // but for ImGui the ID is "My Amazing Window##With a hidden ID"
     public MainWindow(Plugin plugin)
         : base("Friend List##With a hidden ID")
     {
+        TitleBarButtons = DrawCommon.CreateTitleBarButtons();
+
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(375, 330),
-            MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
+            MinimumSize = new Vector2(760, 330),
+            MaximumSize = new Vector2(760, float.MaxValue)
         };
 
         Plugin = plugin;
@@ -94,64 +99,31 @@ public unsafe class MainWindow : Window, IDisposable
         var agent = AgentFriendlist.Instance();
         if (agent == null) return;
 
-        /*if (ImGui.Button("update"))
-        {
-            Plugin.Log.Debug("update?");
-            var social = Plugin.GameGui.GetAddonByName("Social");
-            if (social == 0)
-            {
-                Plugin.Log.Debug("social not found");
-            }
-            else
-            {
-                Plugin.Log.Debug("social found");
-            }
-
-            agent->Show();
-            agent->Hide();
-
-        }*/
-
-        //DebugManager.PrintOutObject(agent);
-
         if (agent->InfoProxy == null)
         {
             ImGui.Separator();
             ImGui.TextDisabled("Friend list is not loaded.");
             return;
         }
-
-        if (ImGui.Button("update request"))
+#if DEBUG
+        if (ImGui.Button("update friends"))
         {
             Plugin.Log.Debug("update request?");
             agent->InfoProxy->RequestData();
+            
+        }
+        ImGui.SameLine();
+        if (ImGui.Button("update pf"))
+        {
             Plugin.Log.Debug("reset data request?");
             PartyFinderData.ResetData();
             Plugin.Log.Debug("refresh pf request?");
             PartyFinderData.RefreshListing();
         }
+        ImGui.SameLine();
+        ImGui.Text($"pf loaded: {PartyFinderData.Instance.data.Count}, flag grp: {grpDisplay}, nb friend: {agent->InfoProxy->EntryCount}");
+#endif
 
-        ImGui.SameLine();
-        if (ImGui.Button("check lvl"))
-        {
-            GameFunctions.FindPartyFinder(0);
-            /*var friendList = (AddonFriendList*)Plugin.GameGui.GetAddonByName("FriendList");
-            if (friendList != null)
-                Plugin.Log.Debug($"{friendList->FriendList->UldManager.NodeListCount} {friendList->Id}");*/
-        }
-        ImGui.SameLine();
-        if (ImGui.Button("check socialb"))
-        {
-            //open last context menu
-            //AgentContext.Instance()->OpenContextMenu();
-
-            //GameFuntions.GameFuntions.OpenPartyFinder();
-            //uint pfId = AgentLookingForGroup.Instance()->Listings.ListingIds
-            GameFunctions.OpenPartyFinder(28212);
-        }
-        ImGui.SameLine();
-        ImGui.Text($"{PartyFinderData.Instance.data.Count}");
-            
         //ImGuiHelpers.CompileSeStringWrapped($"<icon(56)>");
         //ImGuiHelpers.CompileSeStringWrapped($"<icon(56)> <Gui(12)/> Lorem ipsum dolor <colortype(504)><edgecolortype(505)>sit<colortype(0)><edgecolortype(0)> <italic(1)>amet,<italic(0)> <colortype(500)><edgecolortype(501)>conse<->ctetur<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)><italic(1)>adipi<-><colortype(504)><edgecolortype(505)>scing<colortype(0)><edgecolortype(0)><italic(0)><colortype(0)><edgecolortype(0)> elit. <colortype(502)><edgecolortype(503)>Maece<->nas<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>digni<-><colortype(504)><edgecolortype(505)>ssim<colortype(0)><edgecolortype(0)><colortype(0)><edgecolortype(0)> <colortype(504)><edgecolortype(505)>sem<colortype(0)><edgecolortype(0)> <italic(1)>at<italic(0)> inter<->dum <colortype(500)><edgecolortype(501)>ferme<->ntum.<colortype(0)><edgecolortype(0)> Praes<->ent <colortype(500)><edgecolortype(501)>ferme<->ntum<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>conva<->llis<colortype(0)><edgecolortype(0)> velit <colortype(504)><edgecolortype(505)>sit<colortype(0)><edgecolortype(0)> <italic(1)>amet<italic(0)> <colortype(500)><edgecolortype(501)>hendr<->erit.<colortype(0)><edgecolortype(0)> <colortype(504)><edgecolortype(505)>Sed<colortype(0)><edgecolortype(0)> eu nibh <colortype(502)><edgecolortype(503)>magna.<colortype(0)><edgecolortype(0)> Integ<->er nec lacus in velit porta euism<->od <colortype(504)><edgecolortype(505)>sed<colortype(0)><edgecolortype(0)> et lacus. <colortype(504)><edgecolortype(505)>Sed<colortype(0)><edgecolortype(0)> non <colortype(502)><edgecolortype(503)>mauri<->s<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>venen<-><italic(1)>atis,<colortype(0)><edgecolortype(0)><italic(0)> <colortype(502)><edgecolortype(503)>matti<->s<colortype(0)><edgecolortype(0)> <colortype(502)><edgecolortype(503)>metus<colortype(0)><edgecolortype(0)> in, <italic(1)>aliqu<->et<italic(0)> dolor. <italic(1)>Aliqu<->am<italic(0)> erat <colortype(500)><edgecolortype(501)>volut<->pat.<colortype(0)><edgecolortype(0)> Nulla <colortype(500)><edgecolortype(501)>venen<-><italic(1)>atis<colortype(0)><edgecolortype(0)><italic(0)> velit <italic(1)>ac<italic(0)> <colortype(504)><edgecolortype(505)><colortype(516)><edgecolortype(517)>sus<colortype(0)><edgecolortype(0)>ci<->pit<colortype(0)><edgecolortype(0)> euism<->od. <colortype(500)><edgecolortype(501)><colortype(504)><edgecolortype(505)><colortype(516)><edgecolortype(517)>sus<colortype(0)><edgecolortype(0)>pe<->ndisse<colortype(0)><edgecolortype(0)><colortype(0)><edgecolortype(0)> <colortype(502)><edgecolortype(503)>maxim<->us<colortype(0)><edgecolortype(0)> viver<->ra dui id dapib<->us. Nam torto<->r dolor, <colortype(500)><edgecolortype(501)>eleme<->ntum<colortype(0)><edgecolortype(0)> quis orci id, pulvi<->nar <colortype(500)><edgecolortype(501)>fring<->illa<colortype(0)><edgecolortype(0)> quam. <colortype(500)><edgecolortype(501)>Pelle<->ntesque<colortype(0)><edgecolortype(0)> laore<->et viver<->ra torto<->r eget <colortype(502)><edgecolortype(503)>matti<-><colortype(504)><edgecolortype(505)>s.<colortype(0)><edgecolortype(0)><colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>Vesti<-><bold(1)>bulum<colortype(0)><edgecolortype(0)><bold(0)> eget porta <italic(1)>ante,<italic(0)> a <colortype(502)><edgecolortype(503)>molli<->s<colortype(0)><edgecolortype(0)> nulla. <colortype(500)><edgecolortype(501)>Curab<->itur<colortype(0)><edgecolortype(0)> a ligul<->a leo. <italic(1)>Aliqu<->am<italic(0)> volut<->pat <colortype(504)><edgecolortype(505)>sagit<->tis<colortype(0)><edgecolortype(0)> dapib<->us.");
         /*for (int i = 1; i < 173; i++)
@@ -170,16 +142,18 @@ public unsafe class MainWindow : Window, IDisposable
 
         if (ImGui.BeginTable("friends", 7, ImGuiTableFlags.Resizable | ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg))
         {
-            ImGui.TableSetupColumn("Grp");
-            ImGui.TableSetupColumn("Name");
-            ImGui.TableSetupColumn("Action");
+            ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 150);
+            ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 165);
             //ImGui.TableSetupColumn("ContentID");
-            ImGui.TableSetupColumn("Job");
-            ImGui.TableSetupColumn("Location");
-            ImGui.TableSetupColumn("Company");
-            ImGui.TableSetupColumn("Languages");
-            ImGui.TableSetupColumn("Data");
+            ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 210);
+            ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 70);
+            ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 30);
+            //ImGui.TableSetupColumn("Data");
             ImGui.TableHeadersRow();
+
+            ContextMenus();
 
             //Plugin.Log.Debug($"{agent->InfoProxy->EntryCount}");
             string playerDataCenter = "";
@@ -221,12 +195,47 @@ public unsafe class MainWindow : Window, IDisposable
                 var friend = agent->InfoProxy->GetEntry(i);
                 if (friend == null) continue;
 
+                var name = friend->NameString;
+                if (!name.ToLower().Contains(nameRegex.ToLower())) continue;
+
+                var aname = friend->Group;
+                switch (friend->Group)
+                {
+                    case None:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.None)) continue;
+                        break;
+                    case Star:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.Star)) continue;
+                        break;
+                    case Circle:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.Circle)) continue;
+                        break;
+                    case Triangle:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.Triangle)) continue;
+                        break;
+                    case Diamond:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.Diamond)) continue;
+                        break;
+                    case Heart:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.Heart)) continue;
+                        break;
+                    case Spade:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.Spade)) continue;
+                        break;
+                    case Club:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.Club)) continue;
+                        break;
+                    default:
+                        break;
+                }
+
+
                 ImGui.TableNextRow();
 
-                var name = friend->NameString;
+                
                 Plugin.DataManager.GetExcelSheet<World>().TryGetRow(friend->CurrentWorld, out var friendCurrentWorld);
                 Plugin.DataManager.GetExcelSheet<World>().TryGetRow(friend->HomeWorld, out var friendHomeWorld);
-                var aname = friend->Group;
+                
                 ImGui.TableNextColumn();
                 switch (friend->Group)
                 {
@@ -543,6 +552,70 @@ public unsafe class MainWindow : Window, IDisposable
             }
 
             ImGui.EndTable();
+        }
+    }
+
+    /*private void ContextMenuGrp()
+    {
+        int hovered_column = -1;
+        ImGui.PushID(0);
+        if (ImGui.TableGetColumnFlags(0).HasFlag(ImGuiTableColumnFlags.IsHovered))
+            hovered_column = 0;
+        //if (hovered_column == column && !ImGui.IsAnyItemHovered() && ImGui.IsMouseReleased(1))
+        if (hovered_column == 0 && !ImGui.IsAnyItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+            ImGui.OpenPopup("MyPopup");
+        if (ImGui.BeginPopup("MyPopup"))
+        {
+            ImGui.Text
+            ImGui.EndPopup();
+        }
+        ImGui.PopID();
+    }*/
+
+    private void ContextMenuGrp()
+    {
+        //ImGui.Checkbox("", ref );
+        ImGui.CheckboxFlags("All", ref grpDisplay, (int)Grp.All);
+        ImGui.CheckboxFlags("★", ref grpDisplay, (int)Grp.Star);
+        ImGui.CheckboxFlags("●", ref grpDisplay, (int)Grp.Circle);
+        ImGui.CheckboxFlags("▲", ref grpDisplay, (int)Grp.Triangle);
+        ImGui.CheckboxFlags("♦", ref grpDisplay, (int)Grp.Diamond);
+        ImGui.CheckboxFlags("♥", ref grpDisplay, (int)Grp.Heart);
+        ImGui.CheckboxFlags("♠", ref grpDisplay, (int)Grp.Spade);
+        ImGui.CheckboxFlags("♣", ref grpDisplay, (int)Grp.Club);
+        ImGui.CheckboxFlags("None", ref grpDisplay, (int)Grp.None);
+    }
+
+    private void ContextMenuNames()
+    {
+        ImGui.InputTextWithHint("", "Name..", ref nameRegex, 32);
+    }
+
+    private void ContextMenus()
+    {
+        int hovered_column = -1;
+        for (int column = 0; column < 2; column++)
+        {
+            ImGui.PushID(column);
+            if (ImGui.TableGetColumnFlags(column).HasFlag(ImGuiTableColumnFlags.IsHovered))
+                hovered_column = column;
+            //if (hovered_column == column && !ImGui.IsAnyItemHovered() && ImGui.IsMouseReleased(1))
+            if (hovered_column == column && !ImGui.IsAnyItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+                ImGui.OpenPopup("MyPopup");
+
+            if (ImGui.BeginPopup("MyPopup"))
+            {
+                if (column == 0)
+                {
+                    ContextMenuGrp();
+                }
+                if (column == 1)
+                {
+                    ContextMenuNames();
+                }
+                ImGui.EndPopup();
+            }
+            ImGui.PopID();
         }
     }
 

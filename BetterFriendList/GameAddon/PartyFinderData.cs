@@ -106,6 +106,7 @@ internal class PartyFinderData : IDisposable
 
     public unsafe class HookManagerPartyFinderRefresh
     {
+        //https://github.com/Infiziert90/BetterPartyFinder/blob/main/BetterPartyFinder/HookManager.cs
         [Signature("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 40 0F 10 81")]
         private readonly delegate* unmanaged<AgentLookingForGroup*, byte, byte> RequestPartyFinderListings = null!;
 

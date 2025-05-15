@@ -16,6 +16,21 @@ public static class Extensions
     }
 }
 
+[Flags]
+public enum Grp
+{
+    Nothing = 0x0,
+    Star = 0x1,
+    Circle = 0x2,
+    Triangle = 0x4,
+    Diamond = 0x8,
+    Heart = 0x10,
+    Spade = 0x20,
+    Club = 0x40,
+    None = 0x80,
+    All = Star | Circle | Triangle | Diamond | Heart | Spade | Club | None
+}
+
 public enum Icons
 {
     None = 0,
