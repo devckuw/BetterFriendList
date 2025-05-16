@@ -144,16 +144,17 @@ public unsafe class MainWindow : Window, IDisposable
         {
             ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 150);
-            ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 165);
+            ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 167);
             //ImGui.TableSetupColumn("ContentID");
             ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
             ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 210);
             ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 70);
+            //ImGui.TableSetupColumn("Data", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 300);
             ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 30);
-            //ImGui.TableSetupColumn("Data");
+            ContextMenus();
             ImGui.TableHeadersRow();
 
-            ContextMenus();
+            //ContextMenus();
 
             //Plugin.Log.Debug($"{agent->InfoProxy->EntryCount}");
             string playerDataCenter = "";
@@ -188,8 +189,8 @@ public unsafe class MainWindow : Window, IDisposable
                     Plugin.Log.Debug("is not crossparty");
                 }*/
             }
-              
-            
+
+
             for (var i = 0U; i < agent->InfoProxy->EntryCount; i++)
             {
                 var friend = agent->InfoProxy->GetEntry(i);
@@ -232,10 +233,10 @@ public unsafe class MainWindow : Window, IDisposable
 
                 ImGui.TableNextRow();
 
-                
+
                 Plugin.DataManager.GetExcelSheet<World>().TryGetRow(friend->CurrentWorld, out var friendCurrentWorld);
                 Plugin.DataManager.GetExcelSheet<World>().TryGetRow(friend->HomeWorld, out var friendHomeWorld);
-                
+
                 ImGui.TableNextColumn();
                 switch (friend->Group)
                 {
@@ -244,25 +245,25 @@ public unsafe class MainWindow : Window, IDisposable
                         //ImGuiComponents.IconButton(FontAwesomeIcon.HouseChimney);
                         break;
                     case Star:
-                        ImGui.Text($"★");
+                        ImGui.Text($"  ★");
                         break;
                     case Circle:
-                        ImGui.Text($"●");
+                        ImGui.Text($"  ●");
                         break;
                     case Triangle:
-                        ImGui.Text($"▲");
+                        ImGui.Text($"  ▲");
                         break;
                     case Diamond:
-                        ImGui.Text($"♦");
+                        ImGui.Text($"  ♦");
                         break;
                     case Heart:
-                        ImGui.Text($"♥");
+                        ImGui.Text($"  ♥");
                         break;
                     case Spade:
-                        ImGui.Text($"♠");
+                        ImGui.Text($"  ♠");
                         break;
                     case Club:
-                        ImGui.Text($"♣");
+                        ImGui.Text($"  ♣");
                         break;
                     default:
                         break;
@@ -356,7 +357,7 @@ public unsafe class MainWindow : Window, IDisposable
                         status = 4;
                         break;
                 }
-                ImGuiHelpers.CompileSeStringWrapped($"icon({status+61500})", this.style);
+                ImGuiHelpers.CompileSeStringWrapped($"icon({status + 61500})", this.style);
                 ImGui.SameLine();
                 ImGui.Text(name);
                 ImGui.TableNextColumn();
@@ -366,47 +367,46 @@ public unsafe class MainWindow : Window, IDisposable
                     if (Plugin.ClientState.LocalPlayer.CurrentWorld.RowId == friend->HomeWorld)
                     {
                         houseFlag = false;
-                        if (ImGuiComponents.IconButton($"buttontphouse{i}", FontAwesomeIcon.HouseChimney/*, new Vector2(20, 20)*/))
+                        if (ImGuiComponents.IconButton($"buttontphouse{i}", FontAwesomeIcon.HouseChimney, new Vector2(27, 20)))
                         {
                             agent->OpenFriendEstateTeleportation(friend->ContentId);
                         }
-                        //ImGui.SameLine();
+                        DrawCommon.IsHovered("Estate Teleportation");
                     }
                 }
                 if (houseFlag)
                 {
-                    //ImGuiComponents.IconButton($"buttontphouse{i}", FontAwesomeIcon.None/*, new Vector2(20, 20)*/);
-                    ImGui.Text("         ");
+                    ImGui.Dummy(new Vector2(27, 20));
                 }
                 ImGui.SameLine();
                 if (friend->State == 0 || !friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeader) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMember) ||
-                    (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeaderCrossWorld) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) || 
+                    (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeaderCrossWorld) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMemberCrossWorld) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyLeader) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy) || !isLeader || isMemberCross)
                 {
-                    //ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.None/*, new Vector2(20, 20)*/);
-                    ImGui.Text("         ");
+                    ImGui.Dummy(new Vector2(27, 20));
                 }
                 else
                 {
                     if (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers))
                     {
-                        if (ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.UsersViewfinder/*, new Vector2(20, 20)*/))
+                        if (ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.UsersViewfinder, new Vector2(27, 20)))
                         {
                             var id = PartyFinderData.GetData(friend->ContentId);
                             if (id != null)
                                 GameFunctions.OpenPartyFinder(id.Id);
                         }
+                        DrawCommon.IsHovered("Open Party Finder");
                     }
                     else
                     {
-                        if (ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.PeopleGroup/*, new Vector2(20, 20)*/))
+                        if (ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.PeopleGroup, new Vector2(27, 20)))
                         {
                             //invite;
-                            if (friend->CurrentWorld  == playerWorld)
+                            if (friend->CurrentWorld == playerWorld)
                             {
                                 GameFunctions.InviteSameWorld(friend->NameString, friend->CurrentWorld, friend->ContentId);
                             }
@@ -415,45 +415,49 @@ public unsafe class MainWindow : Window, IDisposable
                                 GameFunctions.InviteOtherWorld(friend->ContentId, friend->CurrentWorld);
                             }
                         }
+                        DrawCommon.IsHovered("Invite to Party");
                     }
                 }
                 ImGui.SameLine();
                 if (friend->State == 0 || !friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy))
                 {
-                    ImGui.Text("         ");
+                    ImGui.Dummy(new Vector2(27, 20));
                 }
                 else
                 {
-                    if (ImGuiComponents.IconButton($"buttondm{i}", FontAwesomeIcon.Comment/*, new Vector2(20, 20)*/))
+                    if (ImGuiComponents.IconButton($"buttondm{i}", FontAwesomeIcon.Comment, new Vector2(27, 20)))
                     {
                         dmTargetName = friend->NameString;
                         dmTargetWorld = friendHomeWorld.Name.ExtractText();
                     }
+                    DrawCommon.IsHovered("Send Tell");
                 }
                 ImGui.SameLine();
                 if (!friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter))
                 {
-                    ImGui.Text("         ");
+                    ImGui.Dummy(new Vector2(27, 20));
                 }
                 else
                 {
-                    if (ImGuiComponents.IconButton($"buttonadventurer{i}", FontAwesomeIcon.ListAlt/*, new Vector2(20, 20)*/))
+                    if (ImGuiComponents.IconButton($"buttonadventurer{i}", FontAwesomeIcon.ListAlt, new Vector2(27, 20)))
                     {
                         GameFunctions.TryOpenAdventurerPlate(friend->ContentId);
                     }
+                    DrawCommon.IsHovered("View Adventurer Plate");
                 }
-                ImGui.SameLine(); 
+                ImGui.SameLine();
                 if (friend->CurrentWorld != playerWorld)
                 {
-                    ImGui.Text("         ");
+                    ImGui.Dummy(new Vector2(27, 20));
                 }
                 else
                 {
-                    if (ImGuiComponents.IconButton($"buttoninfo{i}", FontAwesomeIcon.Info/*, new Vector2(20, 20)*/))
+                    if (ImGuiComponents.IconButton($"buttoninfo{i}", FontAwesomeIcon.Info, new Vector2(27, 20)))
                     {
                         GameFunctions.OpenSearchInfo(friend);
                     }
+                    DrawCommon.IsHovered("View Search Info");
                 }
 
 
@@ -521,11 +525,29 @@ public unsafe class MainWindow : Window, IDisposable
                         ImGuiHelpers.CompileSeStringWrapped($"{friend->FCTagString}");
                         break;
                 }
+
+                //
+                // Summary:
+                //     Extra flags for status: 0x10 = ? always set when accepted friend request 0x20
+                //     = WaitingForFriendListApproval 0x10000->0x70000 = DisplayGroup.Star -> DisplayGroup.Club
+                //     0x1000000 = OtherServer (FCTag not available)
+
+
+                /*ImGui.TableNextColumn();
+                ImGui.Text($"{friend->IsOtherServer}");
+                ImGui.SameLine();
+                ImGui.Text($"{friend->State}");
                 //ImGui.SameLine();
-                //ImGui.Text($"{(long)friend + 0x20:X} {friend->ExtraFlags}");
-                //ImGui.Text($"{(long)friend + 0x24:X}");
-                /*var fcTag = friend->FCTagString;
-                ImGui.Text($"{friend->GrandCompany} {fcTag}");*/
+                //ImGui.Text($"{friend->ExtraFlags}");
+                ImGui.SameLine();
+                ImGui.Text($"{friend->ExtraFlags:X}");
+                ImGui.SameLine();
+                DrawCommon.ClickToCopyText($"{(long)friend:X}");
+                ImGui.SameLine();
+                //ImGui.Text($"{(long)friend + 0x20:X}");
+                DrawCommon.ClickToCopyText($"{(long)friend + 0x20:X}");*/
+                /*ImGui.SameLine();
+                ImGui.Text($"{(long)friend + 0x24:X}");*/
 
                 ImGui.TableNextColumn();
 
@@ -547,8 +569,7 @@ public unsafe class MainWindow : Window, IDisposable
                 if (friend->ClientLanguage == Language.Fr) dl.AddLine(new Vector2(ImGui.GetItemRectMin().X, ImGui.GetItemRectMax().Y + 1), ImGui.GetItemRectMax() + new Vector2(0, 1), 0xFFFFFFFF, 2);
                 ImGui.PopStyleVar();
 
-                //ImGui.TableNextColumn();
-                //DebugManager.PrintOutObject(friend);
+                
             }
 
             ImGui.EndTable();
@@ -572,6 +593,51 @@ public unsafe class MainWindow : Window, IDisposable
         ImGui.PopID();
     }*/
 
+    private void ContextMenuSettings()
+    {
+        ImGui.SetNextItemWidth(210);
+        ImGui.InputTextWithHint("", "Name..", ref nameRegex, 32);
+        ImGui.SameLine();
+        if (ImGui.Button("Reset")) { nameRegex = string.Empty; grpDisplay = (int)Grp.All; }
+
+        if (ImGui.BeginTable("friends", 9))
+        {
+            ImGui.TableSetupColumn("  All", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("  ★", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("  ●", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("  ▲", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("  ♦", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("  ♥", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("  ♠", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("  ♣", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("None", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 35);
+
+            ImGui.TableHeadersRow();
+
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##All", ref grpDisplay, (int)Grp.All);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##★", ref grpDisplay, (int)Grp.Star);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##●", ref grpDisplay, (int)Grp.Circle);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##▲", ref grpDisplay, (int)Grp.Triangle);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##♦", ref grpDisplay, (int)Grp.Diamond);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##♥", ref grpDisplay, (int)Grp.Heart);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##♠", ref grpDisplay, (int)Grp.Spade);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##♣", ref grpDisplay, (int)Grp.Club);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##None", ref grpDisplay, (int)Grp.None);
+
+            ImGui.EndTable();
+        }
+    }
+
     private void ContextMenuGrp()
     {
         //ImGui.Checkbox("", ref );
@@ -594,7 +660,7 @@ public unsafe class MainWindow : Window, IDisposable
     private void ContextMenus()
     {
         int hovered_column = -1;
-        for (int column = 0; column < 2; column++)
+        for (int column = 0; column < 7; column++)
         {
             ImGui.PushID(column);
             if (ImGui.TableGetColumnFlags(column).HasFlag(ImGuiTableColumnFlags.IsHovered))
@@ -605,7 +671,7 @@ public unsafe class MainWindow : Window, IDisposable
 
             if (ImGui.BeginPopup("MyPopup"))
             {
-                if (column == 0)
+                /* (column == 0)
                 {
                     ContextMenuGrp();
                 }
@@ -613,6 +679,11 @@ public unsafe class MainWindow : Window, IDisposable
                 {
                     ContextMenuNames();
                 }
+                if (column == 2)
+                {
+                    ContextMenuSettings();
+                }*/
+                ContextMenuSettings();
                 ImGui.EndPopup();
             }
             ImGui.PopID();

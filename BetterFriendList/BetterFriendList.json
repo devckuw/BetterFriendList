@@ -1,8 +1,8 @@
 {
     "Author": "Loody",
     "Name": "BetterFriendList",
-    "Punchline": "Counts emotes received.",
-    "Description": "Counts emotes received on each character per player.",
+    "Punchline": "SE friend list sucks.",
+    "Description": "Friend list but with better sorting, can search by name, refresh with a button..",
     "ApplicableVersion": "any",
     "IconUrl": "https://raw.githubusercontent.com/devckuw/SamplePlugin/master/S/images/icon.png",
     "RepoUrl": "https://github.com/devckuw/EmCounter",

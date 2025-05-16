@@ -13,6 +13,25 @@ namespace BetterFriendList.Windows
 {
     internal class DrawCommon
     {
+
+        public static void IsHovered(string info)
+        {
+            if (ImGui.IsItemHovered()) { ImGui.SetTooltip(info); }
+        }
+
+        public static void ClickToCopyText(string text, string textCopy = null)
+        {
+            textCopy ??= text;
+            ImGui.Text($"{text}");
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+                if (textCopy != text) ImGui.SetTooltip(textCopy);
+            }
+
+            if (ImGui.IsItemClicked()) ImGui.SetClipboardText($"{textCopy}");
+        }
+
         public unsafe static List<TitleBarButton> CreateTitleBarButtons()
         {
             List<TitleBarButton> titleBarButtons = new()
