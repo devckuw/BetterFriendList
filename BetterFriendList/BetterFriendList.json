@@ -4,11 +4,11 @@
     "Punchline": "SE friend list sucks.",
     "Description": "Friend list but with better sorting, can search by name, refresh with a button, color names..\nRight click for context menu.",
     "ApplicableVersion": "any",
-    "IconUrl": "https://raw.githubusercontent.com/devckuw/SamplePlugin/master/S/images/icon.png",
-    "RepoUrl": "https://github.com/devckuw/EmCounter",
+    "IconUrl": "https://raw.githubusercontent.com/devckuw/BetterFriendList/master/BetterFriendList/images/icon.png",
+    "RepoUrl": "https://github.com/devckuw/BetterFriendList",
     "Tags": [
-        "sample",
-        "plugin",
+        "friend",
+        "ui",
         "Loody"
     ]
 }
