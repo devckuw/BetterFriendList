@@ -10,6 +10,11 @@ using Dalamud.Storage.Assets;
 using BetterFriendList.GameAddon;
 using Dalamud.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Client.Game;
+using Lumina.Excel;
+using Lumina.Excel.Sheets;
+using System;
+using Lumina.Extensions;
 
 namespace BetterFriendList;
 
@@ -41,9 +46,6 @@ public sealed class Plugin : IDalamudPlugin
     {
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
-        // you might normally want to embed resources and load them from the manifest stream
-        var goatImagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
-
         ConfigWindow = new ConfigWindow(this);
         MainWindow = new MainWindow(this);
 
@@ -52,7 +54,7 @@ public sealed class Plugin : IDalamudPlugin
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
-            HelpMessage = "A useful message to display in /xlhelp"
+            HelpMessage = "Open the friend list"
         });
 
         ChatHelper.Initialize();
@@ -98,17 +100,54 @@ public sealed class Plugin : IDalamudPlugin
     public unsafe void ToggleMainUI()
     {
         this.MainWindow.Toggle();
+
         if (MainWindow.IsOpen && Configuration.RefreshFriendOnOpen)
         {
-            Plugin.Log.Debug("Refresh Friend List Start");
             var agent = AgentFriendlist.Instance();
             if (agent == null) return;
 
             if (agent->InfoProxy == null) return;
 
             Plugin.Log.Debug("update request?");
-            agent->InfoProxy->RequestData();
-            Plugin.Log.Debug("Refresh Friend List End");
+
+            if (IsRequestDataAllowed())
+                agent->InfoProxy->RequestData();
+        }
+    }
+
+    public static bool IsRequestDataAllowed()
+    {
+        // https://github.com/nebel/xivPartyIcons/blob/main/PartyIcons/Runtime/ViewModeSetter.cs line 75
+        if (!ClientState.IsLoggedIn)
+            return false;
+        ExcelSheet<ContentFinderCondition> _contentFinderConditionsSheet = Plugin.DataManager.GameData.GetExcelSheet<ContentFinderCondition>() ?? throw new InvalidOperationException();
+
+        var maybeContent = _contentFinderConditionsSheet.FirstOrNull(t => t.TerritoryType.RowId == Plugin.ClientState.TerritoryType);
+
+        unsafe
+        {
+            var gameMain = GameMain.Instance();
+            if (gameMain != null)
+            {
+                if (GameMain.Instance()->CurrentContentFinderConditionId is var conditionId and not 0)
+                {
+                    if (_contentFinderConditionsSheet.GetRowOrDefault(conditionId) is { } conditionContent)
+                    {
+                        maybeContent = conditionContent;
+                    }
+                }
+            }
+        }
+        if (maybeContent is not { } content || content.RowId is 0)
+        {
+            Log.Debug($"Refresh allowed -- Content null {Plugin.ClientState.TerritoryType}");
+            //logged in + in overworld
+            return true;
+        }
+        else
+        {
+            Log.Debug($"Refresh NOT allowed -- {Plugin.ClientState.TerritoryType} {content.Name}");
+            return false;
         }
     }
 }
