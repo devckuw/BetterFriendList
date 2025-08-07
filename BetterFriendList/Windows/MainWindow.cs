@@ -7,7 +7,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using static FFXIVClientStructs.FFXIV.Client.UI.Info.InfoProxyCommonList.CharacterData;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
@@ -106,7 +106,7 @@ public unsafe class MainWindow : Window, IDisposable
     private unsafe void RefreshSolo(int number, byte* name)
     {
         // never called atm friend list has to be open and maybe not safe
-        AddonFriendList* addon = (AddonFriendList*)Plugin.GameGui.GetAddonByName("FriendList");
+        AddonFriendList* addon = (AddonFriendList*)Plugin.GameGui.GetAddonByName("FriendList").Address;
         
         AtkValue* callbackArgs = stackalloc AtkValue[3];
         callbackArgs[0] = new AtkValue { Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int, Int = 107 };
@@ -213,7 +213,7 @@ public unsafe class MainWindow : Window, IDisposable
                 if (InfoProxyCrossRealm.IsCrossRealmParty())
                 {
                     //Plugin.Log.Debug("is crossparty");
-                    if (InfoProxyCrossRealm.GetMemberByContentId((ulong)GetContentId(Plugin.ClientState.LocalPlayer))->IsPartyLeader != 0)
+                    if (InfoProxyCrossRealm.GetMemberByContentId((ulong)GetContentId(Plugin.ClientState.LocalPlayer))->IsPartyLeader)
                     {
                         //Plugin.Log.Debug("is leader");
                     }
@@ -426,7 +426,7 @@ public unsafe class MainWindow : Window, IDisposable
                     ImGui.SameLine();
                     if (ImGui.Button("del friend")) { }*/
                     
-                    if (ImGui.ColorPicker3("", ref color, ImGuiColorEditFlags.NoSidePreview | ImGuiColorEditFlags.DisplayRGB | ImGuiColorEditFlags.DisplayHex))
+                    if (ImGui.ColorPicker3("", ref color, ImGuiColorEditFlags.NoSidePreview | ImGuiColorEditFlags.DisplayRgb | ImGuiColorEditFlags.DisplayHex))
                     {
                         Plugin.Configuration.FriendsColors[friend->ContentId] = new Vector4(color, 1);
                         Plugin.Configuration.Save();
@@ -810,7 +810,8 @@ public unsafe class MainWindow : Window, IDisposable
                       .GetFromGame(Encoding.UTF8.GetString(state.Span[(byteOffset + 4)..(byteOffset + off)]))
                       .GetWrapOrEmpty();
             state.Draw(
-                tex.ImGuiHandle,
+                //tex.ImGuiHandle,
+                tex.Handle,
                 offset + new Vector2(0, (state.LineHeight - state.FontSize) / 2),
                 tex.Size * (state.FontSize / tex.Size.Y),
                 Vector2.Zero,
@@ -828,7 +829,8 @@ public unsafe class MainWindow : Window, IDisposable
                       .GetFromGameIcon(parsed)
                       .GetWrapOrEmpty();
             state.Draw(
-                tex.ImGuiHandle,
+                //tex.ImGuiHandle,
+                tex.Handle,
                 offset + new Vector2(0, (state.LineHeight - state.FontSize) / 2),
                 tex.Size * (state.FontSize / tex.Size.Y),
                 Vector2.Zero,
@@ -838,7 +840,8 @@ public unsafe class MainWindow : Window, IDisposable
         static void DrawAsset(scoped in SeStringDrawState state, Vector2 offset, DalamudAsset asset) =>
         state.Draw(
                 //Service<DalamudAssetManager>.Get().GetDalamudTextureWrap(asset).ImGuiHandle,
-                Plugin.DalamudAssetManager.GetDalamudTextureWrap(asset).ImGuiHandle,
+                //Plugin.DalamudAssetManager.GetDalamudTextureWrap(asset).ImGuiHandle,
+                Plugin.DalamudAssetManager.GetDalamudTextureWrap(asset).Handle,
                 offset + new Vector2(0, (state.LineHeight - state.FontSize) / 2),
                 new(state.FontSize, state.FontSize),
                 Vector2.Zero,

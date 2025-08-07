@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static Dalamud.Interface.Windowing.Window;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using BetterFriendList.GameAddon;
 using BetterFriendList;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
