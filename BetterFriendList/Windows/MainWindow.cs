@@ -579,8 +579,7 @@ public unsafe class MainWindow : Window, IDisposable
                         ImGui.SameLine();
                         if (ImGuiComponents.IconButton($"try refresh solo##{i}", FontAwesomeIcon.Recycle))
                         {
-                            // has to have friend list open so idk? and maybe not safe
-                            /*string grpSign = "";
+                            string grpSign = "";
                             switch (friend->Group)
                             {
                                 case None:
@@ -611,7 +610,7 @@ public unsafe class MainWindow : Window, IDisposable
                             }
                             Span<byte> bytes = Encoding.UTF8.GetBytes($"{grpSign}{friend->NameString}");
                             //RefreshSolo((int)i, friend->Name.GetPointer<byte>(0));
-                            RefreshSolo((int)i, bytes.GetPointer<byte>(0));*/
+                            RefreshSolo((int)i, bytes.GetPointer<byte>(0));
                         }
                     }
                 }
@@ -662,7 +661,6 @@ public unsafe class MainWindow : Window, IDisposable
 
             ImGui.EndTable();
         }
-        ContextMenuGlobal();
     }
 
     private void ContextMenuGlobal()

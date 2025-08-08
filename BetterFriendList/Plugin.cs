@@ -35,6 +35,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] public static IPartyFinderGui PartyFinderGui { get; private set; } = null!;
 
     private const string CommandName = "/betterfriendlist";
+    private const string AliasCommand = "/bfl";
 
     public Configuration Configuration { get; init; }
 
@@ -55,6 +56,11 @@ public sealed class Plugin : IDalamudPlugin
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
             HelpMessage = "Open the friend list"
+        });
+
+        CommandManager.AddHandler(AliasCommand, new CommandInfo(OnCommand)
+        {
+            HelpMessage = "Alias for /betterfriendlist"
         });
 
         ChatHelper.Initialize();
