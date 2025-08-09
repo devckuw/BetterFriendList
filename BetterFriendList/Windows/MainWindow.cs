@@ -180,6 +180,10 @@ public unsafe class MainWindow : Window, IDisposable
             ImGui.SameLine();
             ImGuiHelpers.CompileSeStringWrapped($"icon({i})", this.style);
         }*/
+        if (!Plugin.Configuration.SortOnDifferentTab)
+        {
+            DrawSettingsAbove();
+        }
 
         if (ImGui.BeginTable("friends", 7, ImGuiTableFlags.Resizable | ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg))
         {
@@ -193,7 +197,7 @@ public unsafe class MainWindow : Window, IDisposable
 
             ImGui.TableHeadersRow();
 
-            ContextMenus();
+            //ContextMenus();
 
             //Plugin.Log.Debug($"{agent->InfoProxy->EntryCount}");
             string playerDataCenter = "";
@@ -661,12 +665,16 @@ public unsafe class MainWindow : Window, IDisposable
 
             ImGui.EndTable();
         }
+        if (Plugin.Configuration.SortOnDifferentTab)
+        {
+            ContextMenuGlobal();
+        }
     }
 
     private void ContextMenuGlobal()
     {
         ImGui.PushID(11945);
-        if (ImGui.IsAnyItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+        if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
             ImGui.OpenPopup("ContextMenuGlobal");
 
         if (ImGui.BeginPopup("ContextMenuGlobal"))
@@ -720,6 +728,55 @@ public unsafe class MainWindow : Window, IDisposable
 
             ImGui.EndTable();
         }
+    }
+
+    private void DrawSettingsAbove()
+    {
+        ImGui.BeginChild("settingsleft", new Vector2(220,50));
+        ImGui.SetNextItemWidth(210);
+        ImGui.InputTextWithHint("", "Name..", ref nameRegex, 32);
+        //ImGui.SameLine();
+        if (ImGui.Button("Reset")) { nameRegex = string.Empty; grpDisplay = (int)Grp.All; }
+        ImGui.EndChild();
+        ImGui.SameLine();
+        ImGui.BeginChild("settingsright", new Vector2(270, 50));
+        if (ImGui.BeginTable("friends", 9, ImGuiTableFlags.NoHostExtendX))
+        {
+            ImGui.TableSetupColumn("  All", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("  ★", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("  ●", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("  ▲", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("  ♦", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("  ♥", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("  ♠", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("  ♣", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+            ImGui.TableSetupColumn("None", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 35);
+
+            ImGui.TableHeadersRow();
+
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##All", ref grpDisplay, (int)Grp.All);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##★", ref grpDisplay, (int)Grp.Star);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##●", ref grpDisplay, (int)Grp.Circle);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##▲", ref grpDisplay, (int)Grp.Triangle);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##♦", ref grpDisplay, (int)Grp.Diamond);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##♥", ref grpDisplay, (int)Grp.Heart);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##♠", ref grpDisplay, (int)Grp.Spade);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##♣", ref grpDisplay, (int)Grp.Club);
+            ImGui.TableNextColumn();
+            ImGui.CheckboxFlags("##None", ref grpDisplay, (int)Grp.None);
+
+            ImGui.EndTable();
+        }
+        ImGui.EndChild();
     }
 
     private void ContextMenus()
