@@ -15,6 +15,7 @@ public class Configuration : IPluginConfiguration
     public bool SortOnDifferentTab { get; set; } = true;
 
     public Dictionary<ulong, Vector4> FriendsColors { get; set; } = new Dictionary<ulong, Vector4>();
+    public Dictionary<ulong, string> FriendNotes { get; set; } = new Dictionary<ulong, string>();
 
     // the below exist just to make saving less cumbersome
     public void Save()

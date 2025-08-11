@@ -61,6 +61,7 @@ public unsafe class MainWindow : Window, IDisposable
     private string nameRegex = string.Empty;
     
     private Vector3 color = new Vector3();
+    private string note = string.Empty;
 
     // We give this window a hidden ID using ##
     // So that the user will see "My Amazing Window" as window title,
@@ -163,6 +164,7 @@ public unsafe class MainWindow : Window, IDisposable
         {
             Plugin.IsRequestDataAllowed();
         }
+        
 #endif
 
         //ImGuiHelpers.CompileSeStringWrapped($"<icon(56)>");
@@ -407,7 +409,20 @@ public unsafe class MainWindow : Window, IDisposable
                 ImGui.SameLine();
 
                 ImGui.TextColored(Plugin.Configuration.FriendsColors[friend->ContentId], name);
-
+                if (!Plugin.Configuration.FriendNotes.ContainsKey(friend->ContentId))
+                {
+                    Plugin.Configuration.FriendNotes[friend->ContentId] = string.Empty;
+                    Plugin.Configuration.Save();
+                }
+                note = Plugin.Configuration.FriendNotes[friend->ContentId];
+                if (note != "" && note != null)
+                {
+                    DrawCommon.IsHovered(note);
+                }
+                else
+                {
+                    note = "";
+                }
                 if (ImGui.IsItemHovered())
                 {
                     ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
@@ -417,6 +432,7 @@ public unsafe class MainWindow : Window, IDisposable
                 {
                     Plugin.Log.Debug($"clicked {name}");
                     color = Plugin.Configuration.FriendsColors[friend->ContentId].AsVector3();
+                    note = Plugin.Configuration.FriendNotes[friend->ContentId];
                     ImGui.OpenPopup($"FriendContextMenu##{i}");
                 }
                 if (ImGui.BeginPopup($"FriendContextMenu##{i}"))
@@ -429,13 +445,23 @@ public unsafe class MainWindow : Window, IDisposable
                     if (ImGui.Button("asign grp")) { }
                     ImGui.SameLine();
                     if (ImGui.Button("del friend")) { }*/
-                    
-                    if (ImGui.ColorPicker3("", ref color, ImGuiColorEditFlags.NoSidePreview | ImGuiColorEditFlags.DisplayRgb | ImGuiColorEditFlags.DisplayHex))
+                    //ImGui.BeginChild("friendcontextmenuleft", new Vector2(300,300), true);
+                    if (ImGui.ColorPicker3($"##colorpicker{i}", ref color, ImGuiColorEditFlags.NoSidePreview | ImGuiColorEditFlags.DisplayRgb | ImGuiColorEditFlags.DisplayHex))
                     {
                         Plugin.Configuration.FriendsColors[friend->ContentId] = new Vector4(color, 1);
                         Plugin.Configuration.Save();
                     }
-
+                    //ImGui.EndChild();
+                    ImGui.SameLine();
+                    //ImGui.BeginChild("friendcontextmenuright", new Vector2(300, 300), true);
+                    if (ImGui.InputTextMultiline($"##multitext{i}", ref note))
+                    {
+                        Plugin.Configuration.FriendNotes[friend->ContentId] = note;
+                        Plugin.Configuration.Save();
+                    }
+                    //ImGui.EndChild();
+                    ImGui.SetCursorPos(new Vector2(290, 150));
+                    ImGui.Text("Write notes about your friend\nNotes appear on mouse over");
                     ImGui.EndPopup();
                 }
                 ImGui.PopID();

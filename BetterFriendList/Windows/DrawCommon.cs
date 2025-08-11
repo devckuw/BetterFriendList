@@ -48,7 +48,7 @@ namespace BetterFriendList.Windows
 
                         Plugin.Log.Debug("update request?");
                         if (Plugin.IsRequestDataAllowed())
-                            agent->InfoProxy->RequestData();
+                            Plugin.Log.Debug(agent->InfoProxy->RequestData().ToString());
                     },
                     IconOffset = new(2,1),
                     ShowTooltip = () =>
