@@ -37,7 +37,7 @@ public class ConfigWindow : Window, IDisposable
         }
 
         var sortOnDifferentTab = Configuration.SortOnDifferentTab;
-        if (ImGui.Checkbox("Open sorting option with right click instead of showing above.", ref sortOnDifferentTab))
+        if (ImGui.Checkbox("Open filter options with right click instead of showing above.", ref sortOnDifferentTab))
         {
             Configuration.SortOnDifferentTab = sortOnDifferentTab;
             // can save immediately on change, if you don't want to provide a "Save and Close" button
@@ -50,8 +50,8 @@ public class ConfigWindow : Window, IDisposable
     public void DrawExplication()
     {
         string txt = "Click on friends name to change their color.\n" +
-            "Right Click wherever to show the setting options.\n" +
-            "Refresh buttons are to pull info from the server." +
+            "Right Click wherever to show the filter options.\n" +
+            "Refresh buttons are to pull info from the server.\n" +
             "More sorting things will be added later.\n" +
             "You can give idea on discord :)";
         ImGui.Text(txt);
