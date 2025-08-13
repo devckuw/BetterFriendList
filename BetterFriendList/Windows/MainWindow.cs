@@ -160,7 +160,7 @@ public unsafe class MainWindow : Window, IDisposable
         ImGui.Text($"pf loaded: {PartyFinderData.Instance.data.Count}, flag grp: {grpDisplay}, nb friend: {agent->InfoProxy->EntryCount}");
 
         ImGui.SameLine();
-        if (ImGui.Button("test type"))
+        if (ImGui.Button("test IsRequestDataAllowed"))
         {
             Plugin.IsRequestDataAllowed();
         }
@@ -407,8 +407,10 @@ public unsafe class MainWindow : Window, IDisposable
                 }
                 ImGuiHelpers.CompileSeStringWrapped($"icon({status + 61500})", this.style);
                 ImGui.SameLine();
-
-                ImGui.TextColored(Plugin.Configuration.FriendsColors[friend->ContentId], name);
+                if (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
+                    ImGui.TextColored(Plugin.Configuration.FriendsColors[friend->ContentId], name);
+                else
+                    ImGui.TextColored(new Vector4(Plugin.Configuration.FriendsColors[friend->ContentId].AsVector3(), 0.5f), name);
                 if (!Plugin.Configuration.FriendNotes.ContainsKey(friend->ContentId))
                 {
                     Plugin.Configuration.FriendNotes[friend->ContentId] = string.Empty;
