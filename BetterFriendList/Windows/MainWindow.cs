@@ -73,7 +73,7 @@ public unsafe class MainWindow : Window, IDisposable
 
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(760, 330),
+            MinimumSize = new Vector2(520, 330),
             MaximumSize = new Vector2(760, float.MaxValue)
         };
 
@@ -187,7 +187,7 @@ public unsafe class MainWindow : Window, IDisposable
             DrawSettingsAbove();
         }
 
-        if (ImGui.BeginTable("friends", 7, ImGuiTableFlags.Resizable | ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg))
+        if (ImGui.BeginTable("friends", 7, ImGuiTableFlags.Resizable | ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg | ImGuiTableFlags.Hideable | ImGuiTableFlags.NoHostExtendX))
         {
             ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
             ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 150);
