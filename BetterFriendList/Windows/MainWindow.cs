@@ -63,13 +63,15 @@ public unsafe class MainWindow : Window, IDisposable
     private Vector3 color = new Vector3();
     private string note = string.Empty;
 
+    private uint lastEntryCount = 0;
+
     // We give this window a hidden ID using ##
     // So that the user will see "My Amazing Window" as window title,
     // but for ImGui the ID is "My Amazing Window##With a hidden ID"
     public MainWindow(Plugin plugin)
-        : base("Friend List##With a hidden ID")
+        : base("Friend List##9461")
     {
-        TitleBarButtons = DrawCommon.CreateTitleBarButtons();
+        //TitleBarButtons = DrawCommon.CreateTitleBarButtons();
 
         SizeConstraints = new WindowSizeConstraints
         {
@@ -81,6 +83,15 @@ public unsafe class MainWindow : Window, IDisposable
         useEntity = true;
         this.style = new() { GetEntity = this.GetEntity };
         Plugin.Framework.Update += OnUpdate;
+        this.TitleBarButtons.ForEach(button =>
+        {
+            Plugin.Log.Debug(button.Icon.ToString());
+        });
+    }
+
+    public override void OnOpen()
+    {
+        lastEntryCount = 0;
     }
 
     public void Dispose()
@@ -90,12 +101,20 @@ public unsafe class MainWindow : Window, IDisposable
 
     private void OnUpdate(IFramework framework)
     {
-        if (dmTargetName != string.Empty && dmTargetWorld != string.Empty)
+        var win = ImGuiP.FindWindowByName(this.WindowName);
+        if (!win.IsNull)
         {
-            ChatHelper.SetChatDM(dmTargetName, dmTargetWorld);
-            dmTargetName = string.Empty;
-            dmTargetWorld = string.Empty;
+            if (win.Collapsed)
+            {
+                lastEntryCount = 0;
+            }
         }
+        if (dmTargetName != string.Empty && dmTargetWorld != string.Empty)
+            {
+                ChatHelper.SetChatDM(dmTargetName, dmTargetWorld);
+                dmTargetName = string.Empty;
+                dmTargetWorld = string.Empty;
+            }
     }
 
     private unsafe ulong GetContentId(IPlayerCharacter player)
@@ -165,6 +184,16 @@ public unsafe class MainWindow : Window, IDisposable
             Plugin.IsRequestDataAllowed();
         }
         
+        if (lastEntryCount != agent->InfoProxy->EntryCount)
+        {
+            Plugin.Log.Debug($"{lastEntryCount} => {agent->InfoProxy->EntryCount}");
+            lastEntryCount = agent->InfoProxy->EntryCount;
+            if (lastEntryCount != 0)
+            {
+                SortFriends();
+            }
+        }
+
 #endif
 
         //ImGuiHelpers.CompileSeStringWrapped($"<icon(56)>");
@@ -713,13 +742,8 @@ public unsafe class MainWindow : Window, IDisposable
         ImGui.PopID();
     }
 
-    private void ContextMenuSettings()
+    private void DrawGroupTable()
     {
-        ImGui.SetNextItemWidth(210);
-        ImGui.InputTextWithHint("", "Name..", ref nameRegex, 32);
-        ImGui.SameLine();
-        if (ImGui.Button("Reset")) { nameRegex = string.Empty; grpDisplay = (int)Grp.All; }
-
         if (ImGui.BeginTable("friends", 9))
         {
             ImGui.TableSetupColumn("  All", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
@@ -758,52 +782,51 @@ public unsafe class MainWindow : Window, IDisposable
         }
     }
 
+    private void SortFriends()
+    {
+        Plugin.Log.Debug($"Sorting triggered on {Plugin.Configuration.Sorting}");
+    }
+
+    private void DrawSortingCombo()
+    {
+        if (ImGui.BeginCombo("##sortingCombo", Plugin.Configuration.Sorting.ToString()))
+        {
+            for (int i = 0; i < Enum.GetValues(typeof(Sorting)).Length; i++)
+            {
+                if (ImGui.Selectable(((Sorting)i).ToString()))
+                {
+                    Plugin.Configuration.Sorting = (Sorting)i;
+                    Plugin.Configuration.Save();
+                    SortFriends();
+                }
+            }
+            ImGui.EndCombo();
+        }
+    }
+
+    private void ContextMenuSettings()
+    {
+        ImGui.SetNextItemWidth(210);
+        ImGui.InputTextWithHint("", "Name..", ref nameRegex, 32);
+        ImGui.SameLine();
+        if (ImGui.Button("Reset")) { nameRegex = string.Empty; grpDisplay = (int)Grp.All; }
+        DrawGroupTable();
+        DrawSortingCombo();
+    }
+
     private void DrawSettingsAbove()
     {
         ImGui.BeginChild("settingsleft", new Vector2(220,50));
         ImGui.SetNextItemWidth(210);
         ImGui.InputTextWithHint("", "Name..", ref nameRegex, 32);
-        //ImGui.SameLine();
         if (ImGui.Button("Reset")) { nameRegex = string.Empty; grpDisplay = (int)Grp.All; }
+        ImGui.SameLine();
+        DrawSortingCombo();
         ImGui.EndChild();
+
         ImGui.SameLine();
         ImGui.BeginChild("settingsright", new Vector2(270, 50));
-        if (ImGui.BeginTable("friends", 9, ImGuiTableFlags.NoHostExtendX))
-        {
-            ImGui.TableSetupColumn("  All", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("  ★", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("  ●", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("  ▲", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("  ♦", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("  ♥", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("  ♠", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("  ♣", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("None", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 35);
-
-            ImGui.TableHeadersRow();
-
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn();
-            ImGui.CheckboxFlags("##All", ref grpDisplay, (int)Grp.All);
-            ImGui.TableNextColumn();
-            ImGui.CheckboxFlags("##★", ref grpDisplay, (int)Grp.Star);
-            ImGui.TableNextColumn();
-            ImGui.CheckboxFlags("##●", ref grpDisplay, (int)Grp.Circle);
-            ImGui.TableNextColumn();
-            ImGui.CheckboxFlags("##▲", ref grpDisplay, (int)Grp.Triangle);
-            ImGui.TableNextColumn();
-            ImGui.CheckboxFlags("##♦", ref grpDisplay, (int)Grp.Diamond);
-            ImGui.TableNextColumn();
-            ImGui.CheckboxFlags("##♥", ref grpDisplay, (int)Grp.Heart);
-            ImGui.TableNextColumn();
-            ImGui.CheckboxFlags("##♠", ref grpDisplay, (int)Grp.Spade);
-            ImGui.TableNextColumn();
-            ImGui.CheckboxFlags("##♣", ref grpDisplay, (int)Grp.Club);
-            ImGui.TableNextColumn();
-            ImGui.CheckboxFlags("##None", ref grpDisplay, (int)Grp.None);
-
-            ImGui.EndTable();
-        }
+        DrawGroupTable();
         ImGui.EndChild();
     }
 

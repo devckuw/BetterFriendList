@@ -17,6 +17,8 @@ public class Configuration : IPluginConfiguration
     public Dictionary<ulong, Vector4> FriendsColors { get; set; } = new Dictionary<ulong, Vector4>();
     public Dictionary<ulong, string> FriendNotes { get; set; } = new Dictionary<ulong, string>();
 
+    public Sorting Sorting = Sorting.Oldest;
+
     // the below exist just to make saving less cumbersome
     public void Save()
     {

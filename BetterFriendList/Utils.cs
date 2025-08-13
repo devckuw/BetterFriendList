@@ -31,6 +31,16 @@ public enum Grp
     All = Star | Circle | Triangle | Diamond | Heart | Spade | Club | None
 }
 
+public enum Sorting
+{
+    Oldest = 0,
+    Newest = 1,
+    Alphabetical = 2,
+    HomeWorld = 3,
+    Color = 4,
+    Group = 5
+}
+
 public enum Icons
 {
     None = 0,
