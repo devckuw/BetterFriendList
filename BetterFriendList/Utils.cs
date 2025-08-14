@@ -31,6 +31,11 @@ public enum Grp
     All = Star | Circle | Triangle | Diamond | Heart | Spade | Club | None
 }
 
+public struct SortingKeys
+{
+    public uint index;
+}
+
 public enum Sorting
 {
     Oldest = 0,

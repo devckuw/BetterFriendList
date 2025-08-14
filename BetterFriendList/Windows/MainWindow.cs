@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Game.Network.Structures.InfoProxy;
 using Dalamud.Interface.Colors;
@@ -59,11 +61,13 @@ public unsafe class MainWindow : Window, IDisposable
 
     private int grpDisplay = (int)Grp.All;
     private string nameRegex = string.Empty;
+    private bool onlineFirst;
     
     private Vector3 color = new Vector3();
     private string note = string.Empty;
 
     private uint lastEntryCount = 0;
+    private List<SortingKeys> sortedIndexes;
 
     // We give this window a hidden ID using ##
     // So that the user will see "My Amazing Window" as window title,
@@ -71,7 +75,7 @@ public unsafe class MainWindow : Window, IDisposable
     public MainWindow(Plugin plugin)
         : base("Friend List##9461")
     {
-        //TitleBarButtons = DrawCommon.CreateTitleBarButtons();
+        TitleBarButtons = DrawCommon.CreateTitleBarButtons();
 
         SizeConstraints = new WindowSizeConstraints
         {
@@ -83,10 +87,7 @@ public unsafe class MainWindow : Window, IDisposable
         useEntity = true;
         this.style = new() { GetEntity = this.GetEntity };
         Plugin.Framework.Update += OnUpdate;
-        this.TitleBarButtons.ForEach(button =>
-        {
-            Plugin.Log.Debug(button.Icon.ToString());
-        });
+        onlineFirst = Plugin.Configuration.OnlineFirst;
     }
 
     public override void OnOpen()
@@ -183,7 +184,9 @@ public unsafe class MainWindow : Window, IDisposable
         {
             Plugin.IsRequestDataAllowed();
         }
-        
+
+#endif
+
         if (lastEntryCount != agent->InfoProxy->EntryCount)
         {
             Plugin.Log.Debug($"{lastEntryCount} => {agent->InfoProxy->EntryCount}");
@@ -194,7 +197,10 @@ public unsafe class MainWindow : Window, IDisposable
             }
         }
 
-#endif
+        if (agent->InfoProxy->EntryCount != sortedIndexes.Count)
+        {
+            return;
+        }
 
         //ImGuiHelpers.CompileSeStringWrapped($"<icon(56)>");
         //ImGuiHelpers.CompileSeStringWrapped($"<icon(56)> <Gui(12)/> Lorem ipsum dolor <colortype(504)><edgecolortype(505)>sit<colortype(0)><edgecolortype(0)> <italic(1)>amet,<italic(0)> <colortype(500)><edgecolortype(501)>conse<->ctetur<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)><italic(1)>adipi<-><colortype(504)><edgecolortype(505)>scing<colortype(0)><edgecolortype(0)><italic(0)><colortype(0)><edgecolortype(0)> elit. <colortype(502)><edgecolortype(503)>Maece<->nas<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>digni<-><colortype(504)><edgecolortype(505)>ssim<colortype(0)><edgecolortype(0)><colortype(0)><edgecolortype(0)> <colortype(504)><edgecolortype(505)>sem<colortype(0)><edgecolortype(0)> <italic(1)>at<italic(0)> inter<->dum <colortype(500)><edgecolortype(501)>ferme<->ntum.<colortype(0)><edgecolortype(0)> Praes<->ent <colortype(500)><edgecolortype(501)>ferme<->ntum<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>conva<->llis<colortype(0)><edgecolortype(0)> velit <colortype(504)><edgecolortype(505)>sit<colortype(0)><edgecolortype(0)> <italic(1)>amet<italic(0)> <colortype(500)><edgecolortype(501)>hendr<->erit.<colortype(0)><edgecolortype(0)> <colortype(504)><edgecolortype(505)>Sed<colortype(0)><edgecolortype(0)> eu nibh <colortype(502)><edgecolortype(503)>magna.<colortype(0)><edgecolortype(0)> Integ<->er nec lacus in velit porta euism<->od <colortype(504)><edgecolortype(505)>sed<colortype(0)><edgecolortype(0)> et lacus. <colortype(504)><edgecolortype(505)>Sed<colortype(0)><edgecolortype(0)> non <colortype(502)><edgecolortype(503)>mauri<->s<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>venen<-><italic(1)>atis,<colortype(0)><edgecolortype(0)><italic(0)> <colortype(502)><edgecolortype(503)>matti<->s<colortype(0)><edgecolortype(0)> <colortype(502)><edgecolortype(503)>metus<colortype(0)><edgecolortype(0)> in, <italic(1)>aliqu<->et<italic(0)> dolor. <italic(1)>Aliqu<->am<italic(0)> erat <colortype(500)><edgecolortype(501)>volut<->pat.<colortype(0)><edgecolortype(0)> Nulla <colortype(500)><edgecolortype(501)>venen<-><italic(1)>atis<colortype(0)><edgecolortype(0)><italic(0)> velit <italic(1)>ac<italic(0)> <colortype(504)><edgecolortype(505)><colortype(516)><edgecolortype(517)>sus<colortype(0)><edgecolortype(0)>ci<->pit<colortype(0)><edgecolortype(0)> euism<->od. <colortype(500)><edgecolortype(501)><colortype(504)><edgecolortype(505)><colortype(516)><edgecolortype(517)>sus<colortype(0)><edgecolortype(0)>pe<->ndisse<colortype(0)><edgecolortype(0)><colortype(0)><edgecolortype(0)> <colortype(502)><edgecolortype(503)>maxim<->us<colortype(0)><edgecolortype(0)> viver<->ra dui id dapib<->us. Nam torto<->r dolor, <colortype(500)><edgecolortype(501)>eleme<->ntum<colortype(0)><edgecolortype(0)> quis orci id, pulvi<->nar <colortype(500)><edgecolortype(501)>fring<->illa<colortype(0)><edgecolortype(0)> quam. <colortype(500)><edgecolortype(501)>Pelle<->ntesque<colortype(0)><edgecolortype(0)> laore<->et viver<->ra torto<->r eget <colortype(502)><edgecolortype(503)>matti<-><colortype(504)><edgecolortype(505)>s.<colortype(0)><edgecolortype(0)><colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>Vesti<-><bold(1)>bulum<colortype(0)><edgecolortype(0)><bold(0)> eget porta <italic(1)>ante,<italic(0)> a <colortype(502)><edgecolortype(503)>molli<->s<colortype(0)><edgecolortype(0)> nulla. <colortype(500)><edgecolortype(501)>Curab<->itur<colortype(0)><edgecolortype(0)> a ligul<->a leo. <italic(1)>Aliqu<->am<italic(0)> volut<->pat <colortype(504)><edgecolortype(505)>sagit<->tis<colortype(0)><edgecolortype(0)> dapib<->us.");
@@ -264,9 +270,10 @@ public unsafe class MainWindow : Window, IDisposable
                 }*/
             }
 
-
-            for (var i = 0U; i < agent->InfoProxy->EntryCount; i++)
+            //for (var i = 0U; i < agent->InfoProxy->EntryCount; i++)
+            foreach (var ind in sortedIndexes)
             {
+                var i = ind.index;
                 var friend = agent->InfoProxy->GetEntry(i);
                 if (friend == null) continue;
 
@@ -785,10 +792,104 @@ public unsafe class MainWindow : Window, IDisposable
     private void SortFriends()
     {
         Plugin.Log.Debug($"Sorting triggered on {Plugin.Configuration.Sorting}");
+        
+        var agent = AgentFriendlist.Instance();
+        if (agent == null)
+        {
+            Plugin.Log.Debug($"agent null => no sorting");
+            return;
+        }
+        if (agent->InfoProxy == null)
+        {
+            Plugin.Log.Debug($"proxy null => no sorting");
+            return;
+        }
+        //List<SortingKeys> indexes = new List<SortingKeys>((Int32)agent->InfoProxy->EntryCount);
+        List<SortingKeys> indexes = new List<SortingKeys>();
+        for (var i = 0U; i < agent->InfoProxy->EntryCount; i++)
+        {
+            //var t = new SortingKeys { index = i };
+            //indexes[(int)i] = t;
+            indexes.Add(new SortingKeys { index = i });
+        }
+        switch (Plugin.Configuration.Sorting)
+        {
+            case Sorting.Oldest:
+                if (onlineFirst)
+                {
+                    sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->Sort).ToList();
+                }
+                else
+                {
+                    sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->Sort).ToList();
+                }
+                break;
+            case Sorting.Newest:
+                if (onlineFirst)
+                {
+                    sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
+                        .ThenByDescending(x => agent->InfoProxy->GetEntry(x.index)->Sort).ToList();
+                }
+                else
+                {
+                    sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->Sort).ToList();
+                }
+                break;
+            case Sorting.Alphabetical:
+                if (onlineFirst)
+                {
+                    sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->NameString).ToList();
+                }
+                else
+                {
+                    sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->NameString).ToList();
+                }
+                break;
+            case Sorting.HomeWorld:
+                if (onlineFirst)
+                {
+                    sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->HomeWorld).ToList();
+                }
+                else
+                {
+                    sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->HomeWorld).ToList();
+                }
+                break;
+            case Sorting.Color:
+                if (onlineFirst)
+                {
+                    sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
+                        .ThenBy(x => Plugin.Configuration.FriendsColors[agent->InfoProxy->GetEntry(x.index)->ContentId].X).ThenBy(x => Plugin.Configuration.FriendsColors[agent->InfoProxy->GetEntry(x.index)->ContentId].Y).ThenBy(x => Plugin.Configuration.FriendsColors[agent->InfoProxy->GetEntry(x.index)->ContentId].Z).ToList();
+                }
+                else
+                {
+                    sortedIndexes = indexes.OrderBy(x => Plugin.Configuration.FriendsColors[agent->InfoProxy->GetEntry(x.index)->ContentId].X).ThenBy(x => Plugin.Configuration.FriendsColors[agent->InfoProxy->GetEntry(x.index)->ContentId].Y).ThenBy(x => Plugin.Configuration.FriendsColors[agent->InfoProxy->GetEntry(x.index)->ContentId].Z).ToList();
+                }
+                break;
+            case Sorting.Group:
+                if (onlineFirst)
+                {
+                    sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
+                        .ThenByDescending(x => agent->InfoProxy->GetEntry(x.index)->Group).ToList();
+                }
+                else
+                {
+                    sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->Group).ToList();
+                }
+                break;
+            default:
+                sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->NameString).ToList();
+                break;
+        }
+
     }
 
     private void DrawSortingCombo()
     {
+        ImGui.SetNextItemWidth(100);
         if (ImGui.BeginCombo("##sortingCombo", Plugin.Configuration.Sorting.ToString()))
         {
             for (int i = 0; i < Enum.GetValues(typeof(Sorting)).Length; i++)
@@ -804,6 +905,17 @@ public unsafe class MainWindow : Window, IDisposable
         }
     }
 
+    private void DrawOnlineFirstCheckbox()
+    {
+        if (ImGui.Checkbox("Online##onlinefirstcheckbox", ref onlineFirst))
+        {
+            Plugin.Configuration.OnlineFirst = onlineFirst;
+            Plugin.Configuration.Save();
+            SortFriends();
+        }
+        DrawCommon.IsHovered("Online first");
+    }
+
     private void ContextMenuSettings()
     {
         ImGui.SetNextItemWidth(210);
@@ -812,6 +924,8 @@ public unsafe class MainWindow : Window, IDisposable
         if (ImGui.Button("Reset")) { nameRegex = string.Empty; grpDisplay = (int)Grp.All; }
         DrawGroupTable();
         DrawSortingCombo();
+        ImGui.SameLine();
+        DrawOnlineFirstCheckbox();
     }
 
     private void DrawSettingsAbove()
@@ -822,6 +936,8 @@ public unsafe class MainWindow : Window, IDisposable
         if (ImGui.Button("Reset")) { nameRegex = string.Empty; grpDisplay = (int)Grp.All; }
         ImGui.SameLine();
         DrawSortingCombo();
+        ImGui.SameLine();
+        DrawOnlineFirstCheckbox();
         ImGui.EndChild();
 
         ImGui.SameLine();
