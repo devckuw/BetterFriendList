@@ -33,6 +33,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
     [PluginService] public static IFramework Framework { get; private set; } = null!;
     [PluginService] public static IPartyFinderGui PartyFinderGui { get; private set; } = null!;
+    [PluginService] public static IKeyState KeyState { get; private set; } = null!;
 
     private const string CommandName = "/betterfriendlist";
     private const string AliasCommand = "/bfl";
@@ -79,10 +80,13 @@ public sealed class Plugin : IDalamudPlugin
         // Use /xllog to open the log window in-game
         // Example Output: 00:57:54.959 | INF | [SamplePlugin] ===A cool log message from Sample Plugin===
         Log.Information($"===A cool log message from {PluginInterface.Manifest.Name}===");
+        
+        KeyboardHelper.Initialize(this, Configuration.VirtualKey);
     }
 
     public void Dispose()
     {
+        KeyboardHelper.Instance?.Dispose();
         ChatHelper.Instance?.Dispose();
         PartyFinderData.Instance?.Dispose();
 
