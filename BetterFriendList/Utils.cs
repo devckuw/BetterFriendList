@@ -1,10 +1,111 @@
+using Dalamud.Game.Text;
+using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace BetterFriendList;
+
+public class LodeStoneService
+{
+
+    private static bool IsStarted = false;
+    private static HttpClient SharedClient = new()
+    {
+        BaseAddress = new Uri("https://na.finalfantasyxiv.com"),
+    };
+
+    public static void OpenLodestoneProfile(string playerName, string world)
+    {
+        if(IsStarted) return;
+        IsStarted = true;
+
+        try
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    DateTimeOffset timeOffset = DateTimeOffset.UtcNow;
+                    var sec = timeOffset.ToUnixTimeSeconds();
+                    var epoch = sec - (sec % 86400) - 7200;
+
+                    string requestName = playerName.Replace(" ", "+");
+                    string p = $"lodestone/community/search/?q={requestName}&timezone_info=%7B%22today%22%3A%7B%22method%22%3A%22point%22%2C%22epoch%22%3A{epoch}%2C%22year%22%3A2025%2C%22month%22%3A9%2C%22date%22%3A2%7D%7D&_={sec}";
+
+                    using HttpResponseMessage response = await SharedClient.GetAsync(p);
+
+                    response.EnsureSuccessStatusCode();
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+
+                    var doc = new HtmlDocument();
+                    doc.LoadHtml(jsonResponse);
+
+                    var nodes = doc.DocumentNode.SelectNodes(".//li[@class='entry']");
+
+
+                    foreach (var node in nodes ?? new HtmlNodeCollection(null))
+                    {
+                        if (node.GetAttributeValue("class", "") != "entry" || !node.InnerHtml.Contains("frame__chara__name")) continue;
+                        if (node.SelectSingleNode(".//p[@class='frame__chara__name']").InnerHtml == playerName && node.SelectSingleNode(".//p[@class='frame__chara__world']").InnerHtml.Split(">")[2].Split(" ")[0] == world)
+                        {
+                            string url = $"https://na.finalfantasyxiv.com{node.InnerHtml.Split('"')[1]}";
+                            Dalamud.Utility.Util.OpenLink(url);
+                            break;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Plugin.Log.Error(ex, "Failed to open lodestone profile");
+                    IsStarted = false;
+                }
+                IsStarted = false;
+            });
+        }
+        catch (Exception ex)
+        {
+            Plugin.Log.Error(ex, "Failed to open lodestone profile");
+            IsStarted = false;
+        }
+    }
+
+}
+
+public class ForcedColour
+{
+    public ushort ColourKey { get; set; }
+    public Dictionary<string, double> Color { get; set; }
+    public Vector3? Glow { get; set; }
+    public string PlayerName { get; set; }
+    public string WorldName { get; set; }
+}
+
+public class ChannelConfig
+{
+    public bool Sender { get; set; }
+    public bool Message { get; set; }
+}
+
+public class SimpleTweaksChatNameColor
+{
+    public List<ForcedColour> ForcedColours { get; set; }
+    public bool RandomColours { get; set; }
+    public bool LegacyColours { get; set; }
+    public bool ApplyDefaultColour { get; set; }
+    public ushort DefaultColourKey { get; set; }
+    public Vector3 DefaultColour { get; set; }
+
+    public ChannelConfig DefaultChannelConfig { get; set; }
+    public Dictionary<XivChatType, ChannelConfig> ChannelConfigs { get; set; }
+
+    public ushort Version { get; set; }
+}
 
 public static class Extensions
 {

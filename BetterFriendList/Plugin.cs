@@ -82,6 +82,7 @@ public sealed class Plugin : IDalamudPlugin
         Log.Information($"===A cool log message from {PluginInterface.Manifest.Name}===");
         
         KeyboardHelper.Initialize(this, Configuration.VirtualKey);
+
     }
 
     public void Dispose()

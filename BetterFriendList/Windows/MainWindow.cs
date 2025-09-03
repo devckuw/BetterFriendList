@@ -139,14 +139,13 @@ public unsafe class MainWindow : Window, IDisposable
 
         if (addon != null )
         {
-            Plugin.Log.Debug($"addon here");
-            addon->FireCallback(3, callbackArgs, true);
+            var res = addon->FireCallback(3, callbackArgs, true);
+            Plugin.Log.Debug($"addon here : {res}");
         }
         else
         {
             Plugin.Log.Debug($"addon not here");
         }
-
     }
 
     public override void Draw()
@@ -234,9 +233,6 @@ public unsafe class MainWindow : Window, IDisposable
 
             ImGui.TableHeadersRow();
 
-            //ContextMenus();
-
-            //Plugin.Log.Debug($"{agent->InfoProxy->EntryCount}");
             string playerDataCenter = "";
             ushort playerWorld = 0;
             bool isLeader = true;
@@ -468,7 +464,6 @@ public unsafe class MainWindow : Window, IDisposable
                 ImGui.PushID($"{498 + i}");
                 if (ImGui.IsItemClicked())
                 {
-                    Plugin.Log.Debug($"clicked {name}");
                     color = Plugin.Configuration.FriendsColors[friend->ContentId].AsVector3();
                     note = Plugin.Configuration.FriendNotes[friend->ContentId];
                     ImGui.OpenPopup($"FriendContextMenu##{i}");
@@ -489,17 +484,24 @@ public unsafe class MainWindow : Window, IDisposable
                         Plugin.Configuration.FriendsColors[friend->ContentId] = new Vector4(color, 1);
                         Plugin.Configuration.Save();
                     }
-                    //ImGui.EndChild();
                     ImGui.SameLine();
-                    //ImGui.BeginChild("friendcontextmenuright", new Vector2(300, 300), true);
+
                     if (ImGui.InputTextMultiline($"##multitext{i}", ref note))
                     {
                         Plugin.Configuration.FriendNotes[friend->ContentId] = note;
                         Plugin.Configuration.Save();
                     }
-                    //ImGui.EndChild();
+
                     ImGui.SetCursorPos(new Vector2(290, 150));
                     ImGui.Text("Write notes about your friend\nNotes appear on mouse over");
+
+                    ImGui.SetCursorPos(new Vector2(490, 155));
+                    if (ImGui.Button($"LodeStone##lodeStone{i}"))
+                    {
+                        LodeStoneService.OpenLodestoneProfile(friend->NameString, friendHomeWorld.Name.ExtractText());
+                    }
+                    DrawCommon.IsHovered("Open LodeStone Profile");
+
                     ImGui.EndPopup();
                 }
                 ImGui.PopID();
@@ -804,14 +806,18 @@ public unsafe class MainWindow : Window, IDisposable
             Plugin.Log.Debug($"proxy null => no sorting");
             return;
         }
-        //List<SortingKeys> indexes = new List<SortingKeys>((Int32)agent->InfoProxy->EntryCount);
+
         List<SortingKeys> indexes = new List<SortingKeys>();
         for (var i = 0U; i < agent->InfoProxy->EntryCount; i++)
         {
-            //var t = new SortingKeys { index = i };
-            //indexes[(int)i] = t;
+            if (!Plugin.Configuration.FriendsColors.ContainsKey(agent->InfoProxy->GetEntry(i)->ContentId))
+            {
+                Plugin.Configuration.FriendsColors.Add(agent->InfoProxy->GetEntry(i)->ContentId, new Vector4(255, 255, 255, 1));
+            }
+
             indexes.Add(new SortingKeys { index = i });
         }
+
         switch (Plugin.Configuration.Sorting)
         {
             case Sorting.Oldest:
@@ -884,7 +890,6 @@ public unsafe class MainWindow : Window, IDisposable
                 sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->NameString).ToList();
                 break;
         }
-
     }
 
     private void DrawSortingCombo()

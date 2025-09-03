@@ -1,11 +1,16 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface.Windowing;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Common.Lua;
+using Lumina.Excel.Sheets;
 using Serilog;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Text.Json;
 using static Dalamud.Interface.Utility.Raii.ImRaii;
 
 namespace BetterFriendList.Windows;
@@ -26,7 +31,7 @@ public class ConfigWindow : Window, IDisposable
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(390, 230);
+        Size = new Vector2(390, 250);
         SizeCondition = ImGuiCond.Always;
 
         Configuration = plugin.Configuration;
@@ -97,9 +102,81 @@ public class ConfigWindow : Window, IDisposable
                 }
             }
         }
+        if (ImGui.Button("Import Colors"))
+        {
+            if (ImportColors())
+            {
+                Plugin.Log.Debug("Color Import Success");
+            }
+            else
+            {
+                Plugin.Log.Debug("Color Import Failed");
+            }
+            
+        }
+
+        DrawCommon.IsHovered("Import colors used in chat by Simple Tweaks");
 
         ImGui.NewLine();
         DrawExplication();
+
+    }
+
+    public unsafe bool ImportColors()
+    {
+        var agent = AgentFriendlist.Instance();
+        if (agent == null) return false;
+
+        if (agent->InfoProxy == null) return false;
+
+        string simpleTweaksPath = Plugin.PluginInterface.ConfigDirectory.FullName.Replace("BetterFriendList", "SimpleTweaksPlugin");
+        string nameColorConfig = simpleTweaksPath + "\\ChatTweaks@ChatNameColours.json";
+
+        if (!File.Exists(nameColorConfig))
+        {
+            Plugin.Log.Information("config file not present");
+            return false;
+            
+        }
+        Plugin.Log.Information("config file present");
+
+        Dictionary<string, ulong> friends = new Dictionary<string, ulong>();
+
+        for (var i = 0U; i < agent->InfoProxy->EntryCount; i++)
+        {
+            var friend = agent->InfoProxy->GetEntry(i);
+            Plugin.DataManager.GetExcelSheet<World>().TryGetRow(friend->HomeWorld, out var friendHomeWorld);
+            friends.Add(friend->NameString + "@" + friendHomeWorld.Name.ExtractText(), friend->ContentId);
+        }
+
+        List<ForcedColour> forcedColours = ReadJsonColors(nameColorConfig);
+
+        foreach (ForcedColour forcedColour in forcedColours)
+        {
+            if (friends.ContainsKey(forcedColour.PlayerName + "@" + forcedColour.WorldName))
+            {
+                Configuration.FriendsColors[friends[forcedColour.PlayerName + "@" + forcedColour.WorldName]] = new Vector4((float)forcedColour.Color["X"], (float)forcedColour.Color["Y"], (float)forcedColour.Color["Z"], 1.0f);
+                Plugin.Log.Debug($"Adding {forcedColour.PlayerName + "@" + forcedColour.WorldName} with color {forcedColour.Color["X"]},{forcedColour.Color["Y"]},{forcedColour.Color["Y"]}");
+            }
+        }
+
+        Configuration.Save();
+
+        return true;
+       
+    }
+
+    public List<ForcedColour> ReadJsonColors(string path)
+    {
+        string jsonString = File.ReadAllText(path);
+        SimpleTweaksChatNameColor? simpleTweaksChatNameColor = JsonSerializer.Deserialize<SimpleTweaksChatNameColor>(jsonString);
+
+        if (simpleTweaksChatNameColor != null)
+        {
+            return simpleTweaksChatNameColor.ForcedColours;
+        }
+
+        return new List<ForcedColour>();
     }
 
     public void DrawExplication()
