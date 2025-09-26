@@ -16,6 +16,7 @@ public class Configuration : IPluginConfiguration
     // settings
     public bool RefreshFriendOnOpen { get; set; } = false;
     public bool SortOnDifferentTab { get; set; } = true;
+    public bool FixedColumnSize { get; set; } = true;
     public VirtualKey VirtualKey { get; set; } = VirtualKey.NO_KEY;
 
     // data

@@ -75,7 +75,7 @@ public unsafe class MainWindow : Window, IDisposable
     public MainWindow(Plugin plugin)
         : base("Friend List##9461")
     {
-        TitleBarButtons = DrawCommon.CreateTitleBarButtons();
+        TitleBarButtons = DrawCommon.CreateTitleBarButtons(plugin);
 
         SizeConstraints = new WindowSizeConstraints
         {
@@ -223,13 +223,26 @@ public unsafe class MainWindow : Window, IDisposable
 
         if (ImGui.BeginTable("friends", 7, ImGuiTableFlags.Resizable | ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg | ImGuiTableFlags.Hideable | ImGuiTableFlags.NoHostExtendX))
         {
-            ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 150);
-            ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 167);
-            ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 210);
-            ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 70);
-            ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 30);
+            if (Plugin.Configuration.FixedColumnSize)
+            {
+                ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 150);
+                ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 167);
+                ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+                ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 210);
+                ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 70);
+                ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 30);
+            }
+            else
+            {
+                ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.None, 20);
+                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.None, 150);
+                ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.None, 167);
+                ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.None, 20);
+                ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.None, 210);
+                ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.None, 70);
+                ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.None, 30);
+            }
 
             ImGui.TableHeadersRow();
 
@@ -525,13 +538,18 @@ public unsafe class MainWindow : Window, IDisposable
                     ImGui.Dummy(new Vector2(27, 20));
                 }
                 ImGui.SameLine();
-                if (friend->State == 0 || !friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter) ||
-                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeader) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMember) ||
+                if (friend->State == 0 ||
+                    !friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter) ||
+                    (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeader) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
+                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMember) ||
                     (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeaderCrossWorld) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMemberCrossWorld) ||
-                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyLeader) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember) ||
-                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld) ||
-                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy) || !isLeader || isMemberCross)
+                    (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyLeader) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
+                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember) ||
+                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld) ||
+                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy) ||
+                    (!isLeader  && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers))||
+                    isMemberCross)
                 {
                     ImGui.Dummy(new Vector2(27, 20));
                 }
@@ -542,8 +560,13 @@ public unsafe class MainWindow : Window, IDisposable
                         if (ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.UsersViewfinder, new Vector2(27, 20)))
                         {
                             var id = PartyFinderData.GetData(friend->ContentId);
+                            if (id == null)
+                            {
+                                PartyFinderData.RefreshListing();
+                                id = PartyFinderData.GetData(friend->ContentId);
+                            }
                             if (id != null)
-                                GameFunctions.OpenPartyFinder(id.Id);
+                                    GameFunctions.OpenPartyFinder(id.Id);
                         }
                         DrawCommon.IsHovered("Open Party Finder");
                     }

@@ -31,7 +31,7 @@ public class ConfigWindow : Window, IDisposable
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(390, 250);
+        Size = new Vector2(390, 275);
         SizeCondition = ImGuiCond.Always;
 
         Configuration = plugin.Configuration;
@@ -54,6 +54,14 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.Checkbox("Open filter options with right click instead of showing above.", ref sortOnDifferentTab))
         {
             Configuration.SortOnDifferentTab = sortOnDifferentTab;
+            // can save immediately on change, if you don't want to provide a "Save and Close" button
+            Configuration.Save();
+        }
+
+        var fixedColumnSize = Configuration.FixedColumnSize;
+        if (ImGui.Checkbox("Fixed column size.", ref fixedColumnSize))
+        {
+            Configuration.FixedColumnSize = fixedColumnSize;
             // can save immediately on change, if you don't want to provide a "Save and Close" button
             Configuration.Save();
         }

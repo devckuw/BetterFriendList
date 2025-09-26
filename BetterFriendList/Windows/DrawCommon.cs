@@ -32,7 +32,7 @@ namespace BetterFriendList.Windows
             if (ImGui.IsItemClicked()) ImGui.SetClipboardText($"{textCopy}");
         }
 
-        public unsafe static List<TitleBarButton> CreateTitleBarButtons()
+        public unsafe static List<TitleBarButton> CreateTitleBarButtons(Plugin plugin)
         {
             List<TitleBarButton> titleBarButtons = new()
             {
@@ -76,6 +76,22 @@ namespace BetterFriendList.Windows
                     {
                         ImGui.BeginTooltip();
                         ImGui.Text("Refresh Party Finder");
+                        ImGui.EndTooltip();
+                    }
+                },
+
+                new TitleBarButton()
+                {
+                    Icon = Dalamud.Interface.FontAwesomeIcon.Cog,
+                    Click = (msg) =>
+                    {
+                        plugin.ToggleConfigUI();
+                    },
+                    IconOffset = new(2,1),
+                    ShowTooltip = () =>
+                    {
+                        ImGui.BeginTooltip();
+                        ImGui.Text("Settings");
                         ImGui.EndTooltip();
                     }
                 }
