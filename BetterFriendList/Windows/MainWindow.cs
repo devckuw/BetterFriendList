@@ -562,11 +562,15 @@ public unsafe class MainWindow : Window, IDisposable
                             var id = PartyFinderData.GetData(friend->ContentId);
                             if (id == null)
                             {
-                                PartyFinderData.RefreshListing();
-                                id = PartyFinderData.GetData(friend->ContentId);
+                                if (Plugin.IsRequestDataAllowed())
+                                {
+                                    PartyFinderData.RefreshListingThenOpen(friend->ContentId);
+                                }
                             }
-                            if (id != null)
-                                    GameFunctions.OpenPartyFinder(id.Id);
+                            else
+                            {
+                                GameFunctions.OpenPartyFinder(id.Id);
+                            } 
                         }
                         DrawCommon.IsHovered("Open Party Finder");
                     }

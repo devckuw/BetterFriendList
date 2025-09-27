@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using static BetterFriendList.GameAddon.PartyFinderData;
 using static FFXIVClientStructs.FFXIV.Client.LayoutEngine.Group.SharedGroupLayoutInstance;
@@ -53,13 +54,63 @@ internal class PartyFinderData : IDisposable
     private HookManagerPartyFinderRefresh hookManagerPartyFinderRefresh;
     public Dictionary<ulong, IPartyFinderListing> data = new Dictionary<ulong, IPartyFinderListing>();
 
+    private static void retrieveData()
+    {
+        Instance.hookManagerPartyFinderRefresh.RefreshListings(0);
+        Thread.Sleep(500);
+        Instance.hookManagerPartyFinderRefresh.RefreshListings(1);
+        Thread.Sleep(500);
+        Instance.hookManagerPartyFinderRefresh.RefreshListings(2);
+        Thread.Sleep(500);   
+    }
+
+    private static void retrieveDataThenOpen(ulong id)
+    {
+        Instance.hookManagerPartyFinderRefresh.RefreshListings(0);
+        Thread.Sleep(500);
+        var pf = GetData(id);
+        if (pf != null)
+        {
+            GameFunctions.OpenPartyFinder(pf.Id);
+            return;
+        }
+
+        Instance.hookManagerPartyFinderRefresh.RefreshListings(1);
+        Thread.Sleep(500);
+        pf = GetData(id);
+        if (pf != null)
+        {
+            GameFunctions.OpenPartyFinder(pf.Id);
+            return;
+        }
+
+        Instance.hookManagerPartyFinderRefresh.RefreshListings(2);
+        Thread.Sleep(500);
+        pf = GetData(id);
+        if (pf == null) return;
+        GameFunctions.OpenPartyFinder(pf.Id);
+    }
+
     public static void RefreshListing()
     {
         if (Instance == null)
         {
             return;
         }
-        Instance.hookManagerPartyFinderRefresh.RefreshListings();
+
+        Thread retrieveDataThread = new Thread(retrieveData);
+        retrieveDataThread.Start();
+    }
+
+    public static void RefreshListingThenOpen(ulong id)
+    {
+        if (Instance == null)
+        {
+            return;
+        }
+
+        Thread retrieveDataThread = new Thread(() => retrieveDataThenOpen(id));
+        retrieveDataThread.Start();
     }
 
     private void OnReceivedListing(IPartyFinderListing listing, IPartyFinderListingEventArgs args)
@@ -115,18 +166,17 @@ internal class PartyFinderData : IDisposable
             Plugin.GameInteropProvider.InitializeFromAttributes(this);
         }
 
-        public void RefreshListings()
+        public void RefreshListings(byte tabId)
         {
             if (RequestPartyFinderListings == null)
                 throw new InvalidOperationException("Could not find signature for Party Finder listings");
 
             var agent = AgentLookingForGroup.Instance();
+
+            if (agent == null) return;
+
             var searchAreaTab = AgentLookingForGroup.Instance()->SearchAreaTab;
-            AgentLookingForGroup.Instance()->SearchAreaTab = 0;
-            RequestPartyFinderListings(agent, 0);
-            AgentLookingForGroup.Instance()->SearchAreaTab = 1;
-            RequestPartyFinderListings(agent, 0);
-            AgentLookingForGroup.Instance()->SearchAreaTab = 2;
+            AgentLookingForGroup.Instance()->SearchAreaTab = tabId;
             RequestPartyFinderListings(agent, 0);
             AgentLookingForGroup.Instance()->SearchAreaTab = searchAreaTab;
         }
