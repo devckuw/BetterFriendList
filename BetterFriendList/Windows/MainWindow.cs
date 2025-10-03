@@ -167,16 +167,8 @@ public unsafe class MainWindow : Window, IDisposable
             
         }
         ImGui.SameLine();
-        if (ImGui.Button("update pf"))
-        {
-            Plugin.Log.Debug("reset data request?");
-            PartyFinderData.ResetData();
-            Plugin.Log.Debug("refresh pf request?");
-            PartyFinderData.RefreshListing();
-        }
-        ImGui.SameLine();
         
-        ImGui.Text($"pf loaded: {PartyFinderData.Instance.data.Count}, flag grp: {grpDisplay}, nb friend: {agent->InfoProxy->EntryCount}");
+        ImGui.Text($"flag grp: {grpDisplay}, nb friend: {agent->InfoProxy->EntryCount}");
 
         ImGui.SameLine();
         if (ImGui.Button("test IsRequestDataAllowed"))
@@ -559,18 +551,8 @@ public unsafe class MainWindow : Window, IDisposable
                     {
                         if (ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.UsersViewfinder, new Vector2(27, 20)))
                         {
-                            var id = PartyFinderData.GetData(friend->ContentId);
-                            if (id == null)
-                            {
-                                if (Plugin.IsRequestDataAllowed())
-                                {
-                                    PartyFinderData.RefreshListingThenOpen(friend->ContentId);
-                                }
-                            }
-                            else
-                            {
-                                GameFunctions.OpenPartyFinder(id.Id);
-                            } 
+                            if (AgentLookingForGroup.Instance() == null)
+                                AgentLookingForGroup.Instance()->OpenListingByContentId(friend->ContentId);
                         }
                         DrawCommon.IsHovered("Open Party Finder");
                     }

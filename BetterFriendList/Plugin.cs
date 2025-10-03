@@ -65,7 +65,6 @@ public sealed class Plugin : IDalamudPlugin
         });
 
         ChatHelper.Initialize();
-        PartyFinderData.Initialize();
 
         PluginInterface.UiBuilder.Draw += DrawUI;
 
@@ -89,7 +88,6 @@ public sealed class Plugin : IDalamudPlugin
     {
         KeyboardHelper.Instance?.Dispose();
         ChatHelper.Instance?.Dispose();
-        PartyFinderData.Instance?.Dispose();
 
         WindowSystem.RemoveAllWindows();
 

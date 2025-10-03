@@ -61,27 +61,6 @@ namespace BetterFriendList.Windows
 
                 new TitleBarButton()
                 {
-                    Icon = Dalamud.Interface.FontAwesomeIcon.UsersViewfinder,
-                    Click = (msg) =>
-                    {
-                        Plugin.Log.Debug("reset data => request pf data?");
-                        if (Plugin.IsRequestDataAllowed())
-                        {
-                            PartyFinderData.ResetData();
-                            PartyFinderData.RefreshListing();
-                        }
-                    },
-                    IconOffset = new(2,1),
-                    ShowTooltip = () =>
-                    {
-                        ImGui.BeginTooltip();
-                        ImGui.Text("Refresh Party Finder");
-                        ImGui.EndTooltip();
-                    }
-                },
-
-                new TitleBarButton()
-                {
                     Icon = Dalamud.Interface.FontAwesomeIcon.Cog,
                     Click = (msg) =>
                     {
