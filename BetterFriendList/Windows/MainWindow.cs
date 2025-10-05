@@ -551,7 +551,7 @@ public unsafe class MainWindow : Window, IDisposable
                     {
                         if (ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.UsersViewfinder, new Vector2(27, 20)))
                         {
-                            if (AgentLookingForGroup.Instance() == null)
+                            if (AgentLookingForGroup.Instance() != null)
                                 AgentLookingForGroup.Instance()->OpenListingByContentId(friend->ContentId);
                         }
                         DrawCommon.IsHovered("Open Party Finder");
