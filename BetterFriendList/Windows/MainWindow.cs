@@ -533,7 +533,7 @@ public unsafe class MainWindow : Window, IDisposable
                 if (friend->State == 0 ||
                     !friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter) ||
                     (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeader) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
-                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMember) ||
+                    (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMember) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
                     (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeaderCrossWorld) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMemberCrossWorld) ||
                     (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyLeader) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
