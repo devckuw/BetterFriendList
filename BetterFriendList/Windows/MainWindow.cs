@@ -88,6 +88,7 @@ public unsafe class MainWindow : Window, IDisposable
         this.style = new() { GetEntity = this.GetEntity };
         Plugin.Framework.Update += OnUpdate;
         onlineFirst = Plugin.Configuration.OnlineFirst;
+        sortedIndexes = new List<SortingKeys>();
     }
 
     public override void OnOpen()
