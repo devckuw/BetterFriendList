@@ -34,6 +34,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] public static IFramework Framework { get; private set; } = null!;
     [PluginService] public static IPartyFinderGui PartyFinderGui { get; private set; } = null!;
     [PluginService] public static IKeyState KeyState { get; private set; } = null!;
+    [PluginService] public static IPlayerState PlayerState { get; private set; } = null!;
 
     private const string CommandName = "/betterfriendlist";
     private const string AliasCommand = "/bfl";

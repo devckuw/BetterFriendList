@@ -11,7 +11,7 @@ namespace BetterFriendList
     {
         private bool wasActivte = false;
         private VirtualKey virtualKey;
-        private List<VirtualKey> keyState;
+        private List<VirtualKey> keyState = new List<VirtualKey>();
         private Plugin plugin;
 
         #region singleton

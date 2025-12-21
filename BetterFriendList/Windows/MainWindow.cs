@@ -243,27 +243,33 @@ public unsafe class MainWindow : Window, IDisposable
             ushort playerWorld = 0;
             bool isLeader = true;
             bool isMemberCross = false;
-            if (Plugin.ClientState.LocalPlayer != null)
+            //if (Plugin.ClientState.LocalPlayer != null)
+            if (Plugin.PlayerState.IsLoaded)
             {
-                playerWorld = (ushort)Plugin.ClientState.LocalPlayer.CurrentWorld.RowId;
-                playerDataCenter = Plugin.ClientState.LocalPlayer.CurrentWorld.Value.DataCenter.Value.Name.ExtractText();
+                //playerWorld = (ushort)Plugin.ClientState.LocalPlayer.CurrentWorld.RowId;
+                //playerDataCenter = Plugin.ClientState.LocalPlayer.CurrentWorld.Value.DataCenter.Value.Name.ExtractText();
+                playerWorld = (ushort)Plugin.PlayerState.CurrentWorld.RowId;
+                playerDataCenter = Plugin.PlayerState.CurrentWorld.Value.DataCenter.Value.Name.ExtractText();
             }
-            if (Plugin.PartyList != null && Plugin.ClientState.LocalPlayer != null)
+            if (Plugin.PartyList != null && Plugin.PlayerState.IsLoaded)
+            //if (Plugin.PartyList != null && Plugin.ClientState.LocalPlayer != null)
             {
                 if (Plugin.PartyList.Count > 1)
-                    isLeader = Plugin.PartyList[(int)Plugin.PartyList.PartyLeaderIndex].ContentId == (long)GetContentId(Plugin.ClientState.LocalPlayer);
+                    //isLeader = Plugin.PartyList[(int)Plugin.PartyList.PartyLeaderIndex].ContentId == (long)GetContentId(Plugin.ClientState.LocalPlayer);
+                    isLeader = Plugin.PartyList[(int)Plugin.PartyList.PartyLeaderIndex].ContentId == (long)Plugin.PlayerState.ContentId;
 
                 if (InfoProxyCrossRealm.IsCrossRealmParty())
                 {
                     //Plugin.Log.Debug("is crossparty");
-                    if (InfoProxyCrossRealm.GetMemberByContentId((ulong)GetContentId(Plugin.ClientState.LocalPlayer))->IsPartyLeader)
+                    //if (InfoProxyCrossRealm.GetMemberByContentId((ulong)GetContentId(Plugin.ClientState.LocalPlayer))->IsPartyLeader)
+                    if (InfoProxyCrossRealm.GetMemberByContentId(Plugin.PlayerState.ContentId)->IsPartyLeader)
                     {
                         //Plugin.Log.Debug("is leader");
                     }
                     else
                     {
                         //Plugin.Log.Debug("is not leader"); 
-                        isMemberCross = true;
+                        isMemberCross = true; 
                     }
                 }
                 /*else
@@ -514,9 +520,11 @@ public unsafe class MainWindow : Window, IDisposable
 
                 ImGui.TableNextColumn();
                 bool houseFlag = true;
-                if (Plugin.ClientState.LocalPlayer != null)
+                if (Plugin.PlayerState.IsLoaded)
+                //if (Plugin.ClientState.LocalPlayer != null)
                 {
-                    if (Plugin.ClientState.LocalPlayer.CurrentWorld.RowId == friend->HomeWorld)
+                    if (Plugin.PlayerState.CurrentWorld.RowId == friend->HomeWorld)
+                    //if (Plugin.ClientState.LocalPlayer.CurrentWorld.RowId == friend->HomeWorld)
                     {
                         houseFlag = false;
                         if (ImGuiComponents.IconButton($"buttontphouse{i}", FontAwesomeIcon.HouseChimney, new Vector2(27, 20)))

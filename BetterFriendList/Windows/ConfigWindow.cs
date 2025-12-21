@@ -20,7 +20,7 @@ public class ConfigWindow : Window, IDisposable
     private Configuration Configuration;
 
     VirtualKey key;
-    string keyString;
+    string keyString = string.Empty;
     bool editKey = false;
 
     // We give this window a constant ID using ###
