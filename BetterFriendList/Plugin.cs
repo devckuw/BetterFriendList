@@ -15,6 +15,9 @@ using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using System;
 using Lumina.Extensions;
+using KamiToolKit;
+using SamplePlugin.GameAddon;
+using FFXIVClientStructs.FFXIV.Client.UI.Info;
 
 namespace BetterFriendList;
 
@@ -35,6 +38,8 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] public static IPartyFinderGui PartyFinderGui { get; private set; } = null!;
     [PluginService] public static IKeyState KeyState { get; private set; } = null!;
     [PluginService] public static IPlayerState PlayerState { get; private set; } = null!;
+    [PluginService] public static IAddonLifecycle AddonLifeCycle { get; private set; } = null!;
+    [PluginService] public static IGameConfig GameConfig { get; private set; } = null!;
 
     private const string CommandName = "/betterfriendlist";
     private const string AliasCommand = "/bfl";
@@ -43,11 +48,14 @@ public sealed class Plugin : IDalamudPlugin
 
     public readonly WindowSystem WindowSystem = new("BetterFriendList");
     private ConfigWindow ConfigWindow { get; init; }
-    private MainWindow MainWindow { get; init; }
+    public MainWindow MainWindow { get; init; }
+
+    public NativeSocialWindow NativeSocialWindow { get; init; }
 
     public Plugin()
     {
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+        KamiToolKitLibrary.Initialize(PluginInterface);
 
         ConfigWindow = new ConfigWindow(this);
         MainWindow = new MainWindow(this);
@@ -83,10 +91,17 @@ public sealed class Plugin : IDalamudPlugin
         
         KeyboardHelper.Initialize(this, Configuration.VirtualKey);
 
+        InfoProxyManager.Initialize(this);
+
+        NativeSocialWindow = new NativeSocialWindow(this);
+
     }
 
     public void Dispose()
-    {
+    {   
+        CommandManager.RemoveHandler(CommandName);
+        
+        InfoProxyManager.Instance?.Dispose();
         KeyboardHelper.Instance?.Dispose();
         ChatHelper.Instance?.Dispose();
 
@@ -95,7 +110,9 @@ public sealed class Plugin : IDalamudPlugin
         ConfigWindow.Dispose();
         MainWindow.Dispose();
 
-        CommandManager.RemoveHandler(CommandName);
+        NativeSocialWindow.Dispose();
+
+        KamiToolKitLibrary.Dispose();
     }
 
     private void OnCommand(string command, string args)
@@ -117,11 +134,15 @@ public sealed class Plugin : IDalamudPlugin
             if (agent == null) return;
 
             if (agent->InfoProxy == null) return;
-
+#if DEBUG
             Plugin.Log.Debug("update request?");
+#endif
 
             if (IsRequestDataAllowed())
-                agent->InfoProxy->RequestData();
+            {
+                InfoProxyManager.Instance.requestDataHook.Original((InfoProxyCommonList*)agent->InfoProxy);
+                //agent->InfoProxy->RequestData();
+            }
         }
     }
 
@@ -150,13 +171,17 @@ public sealed class Plugin : IDalamudPlugin
         }
         if (maybeContent is not { } content || content.RowId is 0)
         {
+#if DEBUG
             Log.Debug($"Refresh allowed -- Content null {Plugin.ClientState.TerritoryType}");
+#endif
             //logged in + in overworld
             return true;
         }
         else
         {
+#if DEBUG
             Log.Debug($"Refresh NOT allowed -- {Plugin.ClientState.TerritoryType} {content.Name}");
+#endif
             return false;
         }
     }

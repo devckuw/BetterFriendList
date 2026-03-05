@@ -1,9 +1,11 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Keys;
+using Dalamud.Game.Config;
 using Dalamud.Interface.Windowing;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Common.Lua;
 using Lumina.Excel.Sheets;
+using SamplePlugin.GameAddon;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -22,11 +24,12 @@ public class ConfigWindow : Window, IDisposable
     VirtualKey key;
     string keyString = string.Empty;
     bool editKey = false;
+    Plugin plugin;
 
     // We give this window a constant ID using ###
     // This allows for labels being dynamic, like "{FPS Counter}fps###XYZ counter window",
     // and the window ID will always be "###XYZ counter window" for ImGui
-    public ConfigWindow(Plugin plugin) : base("Better Friend List Settings###With a constant ID")
+    public ConfigWindow(Plugin p) : base("Better Friend List Settings###With a constant ID")
     {
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
@@ -34,19 +37,119 @@ public class ConfigWindow : Window, IDisposable
         Size = new Vector2(390, 275);
         SizeCondition = ImGuiCond.Always;
 
-        Configuration = plugin.Configuration;
+        Configuration = p.Configuration;
+        plugin = p;
+        Plugin.GameConfig.Changed += testconf;
     }
 
-    public void Dispose() { }
+    private void testconf(object? sender, ConfigChangeEvent e)
+    {
+        Plugin.Log.Debug($"{e.ToString()} {e.Option}");
+    }
+
+    public void Dispose()
+    {
+        Plugin.GameConfig.Changed -= testconf;
+    }
 
     public override void Draw()
+    {
+        ImGui.BeginTabBar("tabsConfig");
+        if (ImGui.BeginTabItem("Native"))
+        {
+            DrawNativeConfig();
+            ImGui.EndTabItem();
+        }
+        if (ImGui.BeginTabItem("Plugin"))
+        {
+            DrawPluginConfig();
+            ImGui.EndTabItem();
+        }
+        if (ImGui.BeginTabItem("Info"))
+        {
+            DrawExplication();
+            ImGui.EndTabItem();
+        }
+        ImGui.EndTabBar();
+    }
+
+    public void DrawNativeConfig()
+    {
+        //public bool RefreshFriendOnOpenNative { get; set; } = true;
+
+        var refreshFriendOnOpenNative = Configuration.RefreshFriendOnOpenNative;
+        if (ImGui.Checkbox("Refresh native friend list on opening", ref refreshFriendOnOpenNative))
+        {
+            Configuration.RefreshFriendOnOpenNative = refreshFriendOnOpenNative;
+            Configuration.Save();
+
+            //InfoProxyManager.isRequestDataAllowed = true;
+        }
+
+        //public bool UsesCollapseButton { get; set; } = true;
+        var usesCollapseButton = Configuration.UsesCollapseButton;
+        if (ImGui.Checkbox("Use collapse button", ref usesCollapseButton))
+        {
+            Configuration.UsesCollapseButton = usesCollapseButton;
+            Configuration.Save();
+            if (usesCollapseButton)
+            {
+                plugin.NativeSocialWindow.EnableCollapse();
+            }
+            else
+            {
+                plugin.NativeSocialWindow.DisableCollapse();
+            }
+        }
+
+        //public bool UsesRefreshButton { get; set; } = true;
+        var usesRefreshButton = Configuration.UsesRefreshButton;
+        if (ImGui.Checkbox("Use refresh button", ref usesRefreshButton))
+        {
+            Configuration.UsesRefreshButton = usesRefreshButton;
+            Configuration.Save();
+            if (usesRefreshButton)
+            {
+                plugin.NativeSocialWindow.EnableRefresh();
+            }
+            else
+            {
+                plugin.NativeSocialWindow.DisableRefresh();
+            }
+        }
+
+        //public bool UsesColorNative { get; set; } = true;
+        /*var usesColorNative = Configuration.UsesColorNative;//TODO
+        if (ImGui.Checkbox("Use color for names", ref usesColorNative))
+        {
+            Configuration.UsesColorNative = usesColorNative;
+            Configuration.Save();
+        }*/
+
+        //public bool UsesNotes { get; set; } = true;
+        var usesNotes = Configuration.UsesNotes;//TODO
+        if (ImGui.Checkbox("Show notes on tooltip", ref usesNotes))
+        {
+            Configuration.UsesNotes = usesNotes;
+            Configuration.Save();
+        }
+
+        /*//public bool KeepSubAddonHidden { get; set; } = false;
+        var keepSubAddonHidden = Configuration.KeepSubAddonHidden;
+        if (ImGui.Checkbox("Keep Social window collapsed", ref keepSubAddonHidden))
+        {
+            Configuration.KeepSubAddonHidden = keepSubAddonHidden;
+            Configuration.Save();
+        }*/
+    }
+
+    public void DrawPluginConfig()
     {
         // can't ref a property, so use a local copy
         var refreshFriendOnOpen = Configuration.RefreshFriendOnOpen;
         if (ImGui.Checkbox("Refresh friend list on opening", ref refreshFriendOnOpen))
         {
             Configuration.RefreshFriendOnOpen = refreshFriendOnOpen;
-            // can save immediately on change, if you don't want to provide a "Save and Close" button
             Configuration.Save();
         }
 
@@ -54,7 +157,6 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.Checkbox("Open filter options with right click instead of showing above.", ref sortOnDifferentTab))
         {
             Configuration.SortOnDifferentTab = sortOnDifferentTab;
-            // can save immediately on change, if you don't want to provide a "Save and Close" button
             Configuration.Save();
         }
 
@@ -62,9 +164,43 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.Checkbox("Fixed column size.", ref fixedColumnSize))
         {
             Configuration.FixedColumnSize = fixedColumnSize;
-            // can save immediately on change, if you don't want to provide a "Save and Close" button
             Configuration.Save();
         }
+
+        if (ImGui.Button("Import Colors"))
+        {
+            if (ImportColors())
+            {
+                Plugin.Log.Debug("Color Import Success");
+            }
+            else
+            {
+                Plugin.Log.Debug("Color Import Failed");
+            }
+            
+        }
+
+        DrawCommon.IsHovered("Import colors used in chat by Simple Tweaks");
+
+        //public bool ReplaceDefaultKey { get; set; } = false;
+        var replaceDefaultKey = Configuration.ReplaceDefaultKey;
+        if (ImGui.Checkbox("Prevent native friend list to open.", ref replaceDefaultKey))
+        {
+            Configuration.ReplaceDefaultKey = replaceDefaultKey;
+            Configuration.Save();
+            if (replaceDefaultKey)
+            {   
+                //bool value;//PartyListDisp
+        
+                //Plugin.GameConfig.TryGet(Dalamud.Game.Config.UiControlOption., out value);
+                //Plugin.Log.Debug($"{value}");
+            }
+            else
+            {
+                
+            }
+        }
+        DrawCommon.IsHovered("If you want to set same keybind as native friend list\nand only open de plugin version.\nYou still have to set the keybind bellow.");
 
         key = Configuration.VirtualKey;
         keyString = key.ToString();
@@ -85,7 +221,7 @@ public class ConfigWindow : Window, IDisposable
                 editKey = true;
             }
         }
-        DrawCommon.IsHovered("Backspace to clear\nIf a key doesnt work it might used by another thing.");
+        DrawCommon.IsHovered("Backspace to clear\nIf a key doesnt work it might used by another thing/plugin.");
 
         if (editKey)
         {
@@ -110,24 +246,6 @@ public class ConfigWindow : Window, IDisposable
                 }
             }
         }
-        if (ImGui.Button("Import Colors"))
-        {
-            if (ImportColors())
-            {
-                Plugin.Log.Debug("Color Import Success");
-            }
-            else
-            {
-                Plugin.Log.Debug("Color Import Failed");
-            }
-            
-        }
-
-        DrawCommon.IsHovered("Import colors used in chat by Simple Tweaks");
-
-        ImGui.NewLine();
-        DrawExplication();
-
     }
 
     public unsafe bool ImportColors()
@@ -192,8 +310,8 @@ public class ConfigWindow : Window, IDisposable
         string txt = "Click on friends name to change their color.\n" +
             "Right Click wherever to show the filter options.\n" +
             "Refresh buttons are to pull info from the server.\n" +
-            "More sorting things will be added later.\n" +
-            "You can give idea on discord :)";
+            "You can set notes/colors only on the plugin version.\n" +
+            "Colors on native friendlist will come later";
         ImGui.Text(txt);
     }
 }

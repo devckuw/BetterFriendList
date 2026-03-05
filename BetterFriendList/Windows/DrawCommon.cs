@@ -8,6 +8,8 @@ using Dalamud.Bindings.ImGui;
 using BetterFriendList.GameAddon;
 using BetterFriendList;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Client.UI.Info;
+using SamplePlugin.GameAddon;
 
 namespace BetterFriendList.Windows
 {
@@ -46,9 +48,15 @@ namespace BetterFriendList.Windows
 
                         if (agent->InfoProxy == null) return;
 
+#if DEBUG
                         Plugin.Log.Debug("update request?");
+#endif
                         if (Plugin.IsRequestDataAllowed())
-                            Plugin.Log.Debug(agent->InfoProxy->RequestData().ToString());
+                        {
+                            //InfoProxyManager.isRequestDataAllowed = true;
+                            //Plugin.Log.Debug(agent->InfoProxy->RequestData().ToString());
+                            InfoProxyManager.Instance.requestDataHook.Original((InfoProxyCommonList*)agent->InfoProxy);
+                        }
                     },
                     IconOffset = new(2,1),
                     ShowTooltip = () =>

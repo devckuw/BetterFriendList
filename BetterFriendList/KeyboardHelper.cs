@@ -107,6 +107,10 @@ namespace BetterFriendList
             if (!ChatHelper.IsInputTextActive() && !wasActivte)
             {
                 wasActivte = true;
+                if (plugin.Configuration.ReplaceDefaultKey)
+                {
+                    Plugin.KeyState[virtualKey] = false;
+                }
                 plugin.ToggleMainUI();
             }
         }

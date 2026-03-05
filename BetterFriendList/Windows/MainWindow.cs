@@ -47,6 +47,7 @@ using System.Data.Common;
 using Lumina.Excel;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Extensions;
+using SamplePlugin.GameAddon;
 
 namespace BetterFriendList.Windows;
 
@@ -112,41 +113,17 @@ public unsafe class MainWindow : Window, IDisposable
             }
         }
         if (dmTargetName != string.Empty && dmTargetWorld != string.Empty)
-            {
-                ChatHelper.SetChatDM(dmTargetName, dmTargetWorld);
-                dmTargetName = string.Empty;
-                dmTargetWorld = string.Empty;
-            }
+        {
+            ChatHelper.SetChatDM(dmTargetName, dmTargetWorld);
+            dmTargetName = string.Empty;
+            dmTargetWorld = string.Empty;
+        }
     }
 
     private unsafe ulong GetContentId(IPlayerCharacter player)
     {
         var chara = (Character*)player.Address;
         return chara == null ? 0 : chara->ContentId;
-    }
-
-    private unsafe void RefreshSolo(int number, byte* name)
-    {
-        // never called atm friend list has to be open and maybe not safe
-        AddonFriendList* addon = (AddonFriendList*)Plugin.GameGui.GetAddonByName("FriendList").Address;
-        
-        AtkValue* callbackArgs = stackalloc AtkValue[3];
-        callbackArgs[0] = new AtkValue { Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int, Int = 107 };
-        callbackArgs[1] = new AtkValue { Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int, Int = number };
-        callbackArgs[2] = new AtkValue { Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.String, String = name};
-        Plugin.Log.Debug($"{callbackArgs[0].Type} {callbackArgs[0].Int}");
-        Plugin.Log.Debug($"{callbackArgs[1].Type} {callbackArgs[1].Int}");
-        Plugin.Log.Debug($"{callbackArgs[2].Type} {callbackArgs[2].String}");
-
-        if (addon != null )
-        {
-            var res = addon->FireCallback(3, callbackArgs, true);
-            Plugin.Log.Debug($"addon here : {res}");
-        }
-        else
-        {
-            Plugin.Log.Debug($"addon not here");
-        }
     }
 
     public override void Draw()
@@ -163,8 +140,8 @@ public unsafe class MainWindow : Window, IDisposable
 #if DEBUG
         if (ImGui.Button("update friends"))
         {
-            Plugin.Log.Debug("update request?");
-            agent->InfoProxy->RequestData();
+            //Plugin.Log.Debug("update request?");
+            Plugin.Log.Debug($"check invite {InfoProxyManager.checkFriendInvite()}");
             
         }
         ImGui.SameLine();
@@ -663,7 +640,8 @@ public unsafe class MainWindow : Window, IDisposable
                         canRefreshSolo = true;
                     if (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Offline) && friendCurrentWorld.RowId != playerWorld)
                         canRefreshSolo = true;
-                    if (canRefreshSolo) {
+                    if (canRefreshSolo)
+                    {
                         ImGui.SameLine();
                         if (ImGuiComponents.IconButton($"try refresh solo##{i}", FontAwesomeIcon.Recycle))
                         {
@@ -697,8 +675,7 @@ public unsafe class MainWindow : Window, IDisposable
                                     break;
                             }
                             Span<byte> bytes = Encoding.UTF8.GetBytes($"{grpSign}{friend->NameString}");
-                            //RefreshSolo((int)i, friend->Name.GetPointer<byte>(0));
-                            RefreshSolo((int)i, bytes.GetPointer<byte>(0));
+                            agent->RequestFriendInfo(friend->ContentId);
                         }
                     }
                 }
@@ -809,7 +786,7 @@ public unsafe class MainWindow : Window, IDisposable
         }
     }
 
-    private void SortFriends()
+    public void SortFriends()
     {
         Plugin.Log.Debug($"Sorting triggered on {Plugin.Configuration.Sorting}");
         
