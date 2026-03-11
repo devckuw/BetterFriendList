@@ -15,6 +15,8 @@ using System.Collections.Generic;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using SamplePlugin.GameAddon;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
+using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Graphics;
 
 namespace BetterFriendList.Windows;
 
@@ -23,10 +25,12 @@ public class NativeSocialWindow : IDisposable
 
     private TextureButtonNode? minimizeButton = null;
     private TextureButtonNode? refreshButton = null;
-    private bool isMinimized = false;
+    public bool isMinimized = false;
     private Vector2 lastPos = new Vector2(-1, -1);
     private bool isPlaced = false;
     private int needSubAddonHide = -1;
+    private int needResetFirstVisibleItemIndex = 0;
+    public int oldFirstVisibleItemIndex = -1;
     Plugin plugin;
 
     public NativeSocialWindow(Plugin p)
@@ -46,13 +50,21 @@ public class NativeSocialWindow : IDisposable
         Plugin.AddonLifeCycle.RegisterListener(AddonEvent.PreDraw, "FriendList", OnPreDrawSubAddon);
         Plugin.AddonLifeCycle.RegisterListener(AddonEvent.PreDraw, "SocialList", OnPreDrawSubAddon);
 
+        Plugin.AddonLifeCycle.RegisterListener(AddonEvent.PostDraw, "FriendList", OnPostDrawFriendList);
+
         Plugin.AddonLifeCycle.RegisterListener(AddonEvent.PreFinalize, "FriendList", OnPreFinilizeFriendList);
+
+        Plugin.Framework.Update += OnFrameWorkUpdate;
 
         plugin = p;
     }
 
     public void Dispose()
     {
+        ResetColor();
+
+        Plugin.Framework.Update -= OnFrameWorkUpdate;
+
         Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PostSetup, "Social", OnPostSetupSocial);
         Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PreDraw, "Social", OnPreDrawSocial);
         Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PreFinalize, "Social", OnPreFinilizeSocial);
@@ -65,24 +77,39 @@ public class NativeSocialWindow : IDisposable
         Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PreDraw, "FriendList", OnPreDrawSubAddon);
         Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PreDraw, "SocialList", OnPreDrawSubAddon);
 
+        Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PostDraw, "FriendList", OnPostDrawFriendList);
+
         Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PreFinalize, "FriendList", OnPreFinilizeFriendList);
 
-        minimizeButton?.DetachNode();
         minimizeButton?.Dispose();
+        minimizeButton = null;
 
-        refreshButton?.DetachNode();
         refreshButton?.Dispose();
+        refreshButton = null;
     }
 
-    public unsafe void DisableFlagNode(AtkResNode* node, NodeFlags flag)
+    public unsafe void OnFrameWorkUpdate(IFramework framework)
     {
-        node->NodeFlags &= ~flag;
-    }
+        if (!plugin.Configuration.UsesColorNative) return;
+        var friendList = (AddonSocial*)Plugin.GameGui.GetAddonByName("FriendList").Address;
+        if (friendList == null) return;
+        if (!friendList->IsFullyLoaded()) return;
 
-    public unsafe void EnableFlagNode(AtkResNode* node, NodeFlags flag)
-    {   
-        if (node == null) return;
-        node->NodeFlags |= flag;
+        if (friendList->UldManager.NodeListCount < 9) return;
+
+        var componentList = friendList->UldManager.NodeList[8]->GetAsAtkComponentList();
+
+        if (componentList == null) return;
+
+        var newFirstVisibleItemIndex = componentList->FirstVisibleItemIndex;
+
+        //check for scroll or requested color
+        if (newFirstVisibleItemIndex != oldFirstVisibleItemIndex)
+        {
+            oldFirstVisibleItemIndex = newFirstVisibleItemIndex;
+            Plugin.Log.Debug("scroll");
+            ApplyColor();
+        }
     }
 
     public unsafe void buildRefreshButton()
@@ -91,10 +118,9 @@ public class NativeSocialWindow : IDisposable
         Plugin.Log.Debug("try create refresh button");
 #endif
         var friendList = (AddonFriendList*)Plugin.GameGui.GetAddonByName("FriendList").Address;
-        if (friendList == null)
-        {
-            return;
-        }
+        if (friendList == null) return;
+        if (!friendList->IsFullyLoaded()) return;
+
         refreshButton = new TextureButtonNode()
         {
             Size =  new Vector2(28.0f, 28.0f),
@@ -137,6 +163,8 @@ public class NativeSocialWindow : IDisposable
 
         var social = (AddonSocial*)Plugin.GameGui.GetAddonByName("Social").Address;
         if (social == null) return;
+        if (!social->IsFullyLoaded()) return;
+
         var friendList = (AddonFriendList*)Plugin.GameGui.GetAddonByName("FriendList").Address;
         var partyMembers = (AtkUnitBase*)Plugin.GameGui.GetAddonByName("PartyMemberList").Address;
         var playerSearch = (AtkUnitBase*)Plugin.GameGui.GetAddonByName("SocialList").Address;
@@ -162,13 +190,17 @@ public class NativeSocialWindow : IDisposable
         AtkResNode* btnCM = social->GetNodeById(2);
 
         var windowsResNode = social->GetNodeById(6);
-        var windowsResNodeList = windowsResNode->GetComponent()->UldManager.NodeList;
+        var windowsResNodeComp = windowsResNode->GetComponent();
+        if (windowsResNodeComp == null) return;
+        var windowsResNodeList = windowsResNodeComp->UldManager.NodeList;
 
         var nineGridFocus = windowsResNodeList[3];
         var nineGridNoFocus = windowsResNodeList[2];
 
         var crossButton = windowsResNodeList[6];
-        var crossButtonNodeList = crossButton->GetComponent()->UldManager.NodeList;
+        var crossButtonComp = crossButton->GetComponent();
+        if (crossButtonComp == null) return;
+        var crossButtonNodeList = crossButtonComp->UldManager.NodeList;
         
         var crossButtonCollision = crossButtonNodeList[0];
         var crossButtonImg = crossButtonNodeList[1];
@@ -186,16 +218,16 @@ public class NativeSocialWindow : IDisposable
 
         title->SetPositionShort(12, 7);
 
-        EnableFlagNode(btnPM, NodeFlags.Visible);
-        EnableFlagNode(btnFL, NodeFlags.Visible);
-        EnableFlagNode(btnPS, NodeFlags.Visible);
-        //EnableFlagNode(btnCM, NodeFlags.Visible);
+        btnPM->AddNodeFlag(NodeFlags.Visible);
+        btnFL->AddNodeFlag(NodeFlags.Visible);
+        btnPS->AddNodeFlag(NodeFlags.Visible);
+        //btnCM->AddNodeFlag(NodeFlags.Visible);
 
-        EnableFlagNode(loaded->RootNode, NodeFlags.Visible);
+        loaded->RootNode->AddNodeFlag(NodeFlags.Visible);
 
         for (var i=0; i < loaded->CollisionNodeListCount; i++)
         {
-            EnableFlagNode(loaded->CollisionNodeList[i], NodeFlags.Visible);
+            loaded->CollisionNodeList[i]->AddNodeFlag(NodeFlags.Visible);
         }
     
         isMinimized = false;
@@ -213,6 +245,8 @@ public class NativeSocialWindow : IDisposable
 
         var social = (AddonSocial*)Plugin.GameGui.GetAddonByName("Social").Address;
         if (social == null) return;
+        if (!social->IsFullyLoaded()) return;
+
         var friendList = (AddonFriendList*)Plugin.GameGui.GetAddonByName("FriendList").Address;
         var partyMembers = (AtkUnitBase*)Plugin.GameGui.GetAddonByName("PartyMemberList").Address;
         var playerSearch = (AtkUnitBase*)Plugin.GameGui.GetAddonByName("SocialList").Address;
@@ -238,13 +272,17 @@ public class NativeSocialWindow : IDisposable
         AtkResNode* btnCM = social->GetNodeById(2);
 
         var windowsResNode = social->GetNodeById(6);
-        var windowsResNodeList = windowsResNode->GetComponent()->UldManager.NodeList;
+        var windowsResNodeComp = windowsResNode->GetComponent();
+        if (windowsResNodeComp == null) return;
+        var windowsResNodeList = windowsResNodeComp->UldManager.NodeList;
 
         var nineGridFocus = windowsResNodeList[3];
         var nineGridNoFocus = windowsResNodeList[2];
 
         var crossButton = windowsResNodeList[6];
-        var crossButtonNodeList = crossButton->GetComponent()->UldManager.NodeList;
+        var crossButtonComp = crossButton->GetComponent();
+        if (crossButtonComp == null) return;
+        var crossButtonNodeList = crossButtonComp->UldManager.NodeList;
         
         var crossButtonCollision = crossButtonNodeList[0];
         var crossButtonImg = crossButtonNodeList[1];
@@ -261,16 +299,16 @@ public class NativeSocialWindow : IDisposable
 
         title->SetPositionShort(35, 7);
 
-        DisableFlagNode(btnPM, NodeFlags.Visible);
-        DisableFlagNode(btnFL, NodeFlags.Visible);
-        DisableFlagNode(btnPS, NodeFlags.Visible);
-        //DisableFlagNode(btnCM, NodeFlags.Visible);
+        btnPM->RemoveNodeFlag(NodeFlags.Visible);
+        btnFL->RemoveNodeFlag(NodeFlags.Visible);
+        btnPS->RemoveNodeFlag(NodeFlags.Visible);
+        //btnCM->RemoveNodeFlag(NodeFlags.Visible);
 
-        DisableFlagNode(loaded->RootNode, NodeFlags.Visible);
+        loaded->RootNode->RemoveNodeFlag(NodeFlags.Visible);
 
         for (var i=0; i < loaded->CollisionNodeListCount; i++)
         {
-            DisableFlagNode(loaded->CollisionNodeList[i], NodeFlags.Visible);
+            loaded->CollisionNodeList[i]->RemoveNodeFlag(NodeFlags.Visible);
         }
 
         isMinimized = true;
@@ -333,6 +371,18 @@ public class NativeSocialWindow : IDisposable
         minimizeButton?.DetachNode();
     }
 
+    public void OnPostDrawFriendList(AddonEvent type, AddonArgs args)
+    {
+        if (needResetFirstVisibleItemIndex == 1)
+        {
+            oldFirstVisibleItemIndex = -1;
+            needResetFirstVisibleItemIndex = 0;
+            return;
+        }
+        if (needResetFirstVisibleItemIndex == 2)
+            needResetFirstVisibleItemIndex = 1;
+    }
+
     public unsafe void OnPreDrawSubAddon(AddonEvent type, AddonArgs args)
     {
         if (!isMinimized)
@@ -354,18 +404,6 @@ public class NativeSocialWindow : IDisposable
             Minimize();
             needSubAddonHide = -1;
             return;
-            Plugin.Log.Debug($"hidding subaddon {args.AddonName}");
-            var loaded = (AtkUnitBase*)args.Addon.Address;
-
-            DisableFlagNode(loaded->RootNode, NodeFlags.Visible);
-
-            for (var i=0; i < loaded->CollisionNodeListCount; i++)
-            {
-                DisableFlagNode(loaded->CollisionNodeList[i], NodeFlags.Visible);
-            }
-            Plugin.Log.Debug("needSubAddonHide = false");
-            //DisableFlagNode(loaded->RootNode, NodeFlags.Visible);
-            needSubAddonHide = -1;
         }
     }
     
@@ -374,6 +412,10 @@ public class NativeSocialWindow : IDisposable
 #if DEBUG
         Plugin.Log.Debug($"OnPostSetupSubAddon {args.AddonName}");
 #endif
+        if (args.AddonName == "FriendList")
+        {
+            needResetFirstVisibleItemIndex = 2;
+        }
         if (!isMinimized)
         {
             if (args.AddonName == "FriendList")
@@ -439,11 +481,13 @@ public class NativeSocialWindow : IDisposable
         }
         var social = (AddonSocial*)Plugin.GameGui.GetAddonByName("Social").Address;
         if (social == null) return;
+        if (!social->IsFullyLoaded()) return;
+
         minimizeButton?.AttachNode(social->RootNode);
         minimizeButton?.Position = new Vector2(600, 7);
         
         var btnCM = social->GetNodeById(2);
-        DisableFlagNode(btnCM, NodeFlags.Visible);
+        btnCM->RemoveNodeFlag(NodeFlags.Visible);
     }
 
     public unsafe void SetupRefresh()
@@ -453,14 +497,104 @@ public class NativeSocialWindow : IDisposable
             return;
         }
         var friendList = (AddonFriendList*)Plugin.GameGui.GetAddonByName("FriendList").Address;
-        if (friendList == null)
-        {
-            return;
-        }
+        if (friendList == null) return;
+        if (!friendList->IsFullyLoaded()) return;
 #if DEBUG
         Plugin.Log.Debug("setup refresh");
 #endif
         refreshButton?.AttachNode(friendList->RootNode);
+    }
+
+    public ByteColor RGBAToByteColor(byte r, byte g, byte b, byte a)
+    {
+        return new ByteColor() {RGBA = (uint)(a << 24 | b << 16 | g << 8 | r << 0)};
+    }
+
+    public ByteColor RGBAToByteColor(Vector4 col)
+    {
+        return RGBAToByteColor((byte)(col.X * 255), (byte)(col.Y * 255), (byte)(col.Z * 255), (byte)(col.W * 255));
+    }
+
+    public unsafe AtkTextNode* GetTextNode(AtkComponentListItemRenderer* item)
+    {
+        var node1 = (AtkTextNode*)item->UldManager.NodeList[29];
+        if ((node1->NodeFlags & NodeFlags.Visible) == NodeFlags.Visible)
+            return node1;
+        var node2 = (AtkTextNode*)item->UldManager.NodeList[31];
+        if ((node2->NodeFlags & NodeFlags.Visible) == NodeFlags.Visible)
+            return node2;
+        return null;
+    }
+
+    public unsafe void ApplyColor()//int newFirstVisibleItemIndex)
+    {
+        var friendList = (AddonSocial*)Plugin.GameGui.GetAddonByName("FriendList").Address;
+        if (friendList == null) return;
+        if (!friendList->IsFullyLoaded()) return;
+
+        var proxy = InfoProxyFriendList.Instance();
+        if (proxy == null)
+        {
+            return;
+        }
+
+        var componentList = friendList->UldManager.NodeList[8]->GetAsAtkComponentList();
+
+        for (var i = 3; i < 21; i++)
+        {
+            var cmplistrdr = componentList->UldManager.NodeList[i]->GetAsAtkComponentListItemRenderer();
+            var textNodeptr = GetTextNode(cmplistrdr);
+            if (textNodeptr != null){
+                var col = plugin.Configuration.FriendsColors[proxy->GetEntry((uint)cmplistrdr->ListItemIndex)->ContentId];
+                if (col.X + col.Y + col.Z == 3)
+                {
+                    col = new Vector4(238f/255f, 225f/255f, 197f/255f, 1);
+                }
+                //var byteCol = RGBAToByteColor(col);
+                //Plugin.Log.Debug($"{textNodeptr->NodeText} {cmplistrdr->ListItemIndex} {proxy->GetEntry((uint)cmplistrdr->ListItemIndex)->ContentId} {col} {byteCol.R} {byteCol.G} {byteCol.B} {byteCol.A}");
+                if (!proxy->GetEntry((uint)cmplistrdr->ListItemIndex)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online) ||
+                 proxy->GetEntry((uint)cmplistrdr->ListItemIndex)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld))
+                {
+                    textNodeptr->TextColor = RGBAToByteColor(new Vector4(col.X, col.Y, col.Z, 0.5f));
+                }
+                else
+                {
+                    textNodeptr->TextColor = RGBAToByteColor(col);
+                }
+            }
+        }
+    }
+
+    public unsafe void ResetColor()
+    {
+        var friendList = (AddonSocial*)Plugin.GameGui.GetAddonByName("FriendList").Address;
+        if (friendList == null) return;
+        if (!friendList->IsFullyLoaded()) return;
+
+        var proxy = InfoProxyFriendList.Instance();
+        if (proxy == null)
+        {
+            return;
+        }
+
+        var componentList = friendList->UldManager.NodeList[8]->GetAsAtkComponentList();
+
+        for (var i = 3; i < 21; i++)
+        {
+            var cmplistrdr = componentList->UldManager.NodeList[i]->GetAsAtkComponentListItemRenderer();
+            var textNodeptr = GetTextNode(cmplistrdr);
+            if (textNodeptr != null){
+                if (!proxy->GetEntry((uint)cmplistrdr->ListItemIndex)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online) ||
+                 proxy->GetEntry((uint)cmplistrdr->ListItemIndex)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld))
+                {
+                    textNodeptr->TextColor = RGBAToByteColor(128, 128, 128, 255);
+                }
+                else
+                {
+                    textNodeptr->TextColor = RGBAToByteColor(238, 225, 197, 255);
+                }
+            }
+        }
     }
 
 }

@@ -128,6 +128,9 @@ public unsafe class MainWindow : Window, IDisposable
 
     public override void Draw()
     {
+        if (!Plugin.ClientState.IsLoggedIn) return;
+        if (Plugin.ObjectTable.LocalPlayer == null) return;
+        if (!Plugin.PlayerState.IsLoaded) return;
         var agent = AgentFriendlist.Instance();
         if (agent == null) return;
 
@@ -221,7 +224,7 @@ public unsafe class MainWindow : Window, IDisposable
             bool isLeader = true;
             bool isMemberCross = false;
             //if (Plugin.ClientState.LocalPlayer != null)
-            if (Plugin.PlayerState.IsLoaded)
+            
             {
                 //playerWorld = (ushort)Plugin.ClientState.LocalPlayer.CurrentWorld.RowId;
                 //playerDataCenter = Plugin.ClientState.LocalPlayer.CurrentWorld.Value.DataCenter.Value.Name.ExtractText();
@@ -267,7 +270,7 @@ public unsafe class MainWindow : Window, IDisposable
 
                 if (!Plugin.Configuration.FriendsColors.ContainsKey(friend->ContentId))
                 {
-                    Plugin.Configuration.FriendsColors.Add(friend->ContentId, new Vector4(255, 255, 255, 1));
+                    Plugin.Configuration.FriendsColors.Add(friend->ContentId, new Vector4(1, 1, 1, 1));
                 }
 
                 var aname = friend->Group;

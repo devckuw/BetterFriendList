@@ -214,6 +214,11 @@ public class InfoProxyManager : IDisposable
         {
             ApplyNotesOnTooltip();
         }
+
+        if (plugin.Configuration.UsesColorNative == true && infoProxyCommonList == InfoProxyFriendList.Instance())
+        {
+            RequestApplyColor();
+        }
         plugin.MainWindow.SortFriends();
     }
 
@@ -268,8 +273,8 @@ public class InfoProxyManager : IDisposable
         }
     }
 
-    public unsafe void ApplyColor()
+    public void RequestApplyColor()
     {
-        
+        plugin.NativeSocialWindow.oldFirstVisibleItemIndex = -1;
     }
 }

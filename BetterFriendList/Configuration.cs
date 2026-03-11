@@ -11,7 +11,7 @@ namespace BetterFriendList;
 [Serializable]
 public class Configuration : IPluginConfiguration
 {
-    public int Version { get; set; } = 0;
+    public int Version { get; set; } = 1;
 
     // settings plugin window
     public bool RefreshFriendOnOpen { get; set; } = false;

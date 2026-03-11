@@ -39,17 +39,11 @@ public class ConfigWindow : Window, IDisposable
 
         Configuration = p.Configuration;
         plugin = p;
-        Plugin.GameConfig.Changed += testconf;
-    }
-
-    private void testconf(object? sender, ConfigChangeEvent e)
-    {
-        Plugin.Log.Debug($"{e.ToString()} {e.Option}");
     }
 
     public void Dispose()
     {
-        Plugin.GameConfig.Changed -= testconf;
+        
     }
 
     public override void Draw()
@@ -98,6 +92,10 @@ public class ConfigWindow : Window, IDisposable
             }
             else
             {
+                if (plugin.NativeSocialWindow.isMinimized)
+                {
+                    plugin.NativeSocialWindow.Maximize();
+                }
                 plugin.NativeSocialWindow.DisableCollapse();
             }
         }
@@ -119,12 +117,20 @@ public class ConfigWindow : Window, IDisposable
         }
 
         //public bool UsesColorNative { get; set; } = true;
-        /*var usesColorNative = Configuration.UsesColorNative;//TODO
+        var usesColorNative = Configuration.UsesColorNative;
         if (ImGui.Checkbox("Use color for names", ref usesColorNative))
         {
             Configuration.UsesColorNative = usesColorNative;
             Configuration.Save();
-        }*/
+            if (usesColorNative)
+            {
+                plugin.NativeSocialWindow.oldFirstVisibleItemIndex = -1;
+            }
+            else
+            {
+                plugin.NativeSocialWindow.ResetColor();
+            }
+        }
 
         //public bool UsesNotes { get; set; } = true;
         var usesNotes = Configuration.UsesNotes;//TODO

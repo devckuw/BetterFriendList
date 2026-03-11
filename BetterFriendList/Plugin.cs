@@ -18,6 +18,8 @@ using Lumina.Extensions;
 using KamiToolKit;
 using SamplePlugin.GameAddon;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
+using System.Collections.Generic;
+using System.Numerics;
 
 namespace BetterFriendList;
 
@@ -40,6 +42,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] public static IPlayerState PlayerState { get; private set; } = null!;
     [PluginService] public static IAddonLifecycle AddonLifeCycle { get; private set; } = null!;
     [PluginService] public static IGameConfig GameConfig { get; private set; } = null!;
+    [PluginService] public static IObjectTable ObjectTable { get; private set; } = null!;
 
     private const string CommandName = "/betterfriendlist";
     private const string AliasCommand = "/bfl";
@@ -55,6 +58,26 @@ public sealed class Plugin : IDalamudPlugin
     public Plugin()
     {
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+        if (Configuration.Version == 0)
+        {
+            Dictionary<ulong, Vector4> friendsColors = new Dictionary<ulong, Vector4>();
+            foreach (var item in Configuration.FriendsColors)
+            {
+                if (item.Value.X > 1)
+                {
+                    Plugin.Log.Debug($"{item.Value} need replacement");
+                    friendsColors.Add(item.Key, new Vector4(1,1,1,1));
+                }
+                else
+                {
+                    Plugin.Log.Debug($"{item.Value} ok");
+                    friendsColors.Add(item.Key, item.Value);
+                }
+            }
+            Configuration.FriendsColors = friendsColors;
+            Configuration.Version = 1;
+            Configuration.Save();
+        }
         KamiToolKitLibrary.Initialize(PluginInterface);
 
         ConfigWindow = new ConfigWindow(this);
@@ -87,7 +110,7 @@ public sealed class Plugin : IDalamudPlugin
         // Add a simple message to the log with level set to information
         // Use /xllog to open the log window in-game
         // Example Output: 00:57:54.959 | INF | [SamplePlugin] ===A cool log message from Sample Plugin===
-        Log.Information($"===A cool log message from {PluginInterface.Manifest.Name}===");
+        Log.Information($"===A cool log message from {PluginInterface.Manifest.Name} v{PluginInterface.Manifest.AssemblyVersion}===");
         
         KeyboardHelper.Initialize(this, Configuration.VirtualKey);
 
