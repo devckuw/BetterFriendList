@@ -131,6 +131,7 @@ public class ConfigWindow : Window, IDisposable
                 plugin.NativeSocialWindow.ResetColor();
             }
         }
+        DrawCommon.IsHovered("Colors can be set in the plugin version.");
 
         //public bool UsesNotes { get; set; } = true;
         var usesNotes = Configuration.UsesNotes;//TODO
@@ -139,6 +140,7 @@ public class ConfigWindow : Window, IDisposable
             Configuration.UsesNotes = usesNotes;
             Configuration.Save();
         }
+        DrawCommon.IsHovered("Notes can be set in the plugin version.");
 
         /*//public bool KeepSubAddonHidden { get; set; } = false;
         var keepSubAddonHidden = Configuration.KeepSubAddonHidden;

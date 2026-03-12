@@ -17,6 +17,7 @@ using SamplePlugin.GameAddon;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Graphics;
+using System.Linq;
 
 namespace BetterFriendList.Windows;
 
@@ -95,13 +96,13 @@ public class NativeSocialWindow : IDisposable
         if (friendList == null) return;
         if (!friendList->IsFullyLoaded()) return;
 
-        if (friendList->UldManager.NodeListCount < 9) return;
+        var listComponentNode = (AtkComponentNode*) friendList->GetNodeById(14);
+        if (listComponentNode == null) return;
+        
+        var listComponent = (AtkComponentList*) listComponentNode->Component;
+        if (listComponent == null) return;
 
-        var componentList = friendList->UldManager.NodeList[8]->GetAsAtkComponentList();
-
-        if (componentList == null) return;
-
-        var newFirstVisibleItemIndex = componentList->FirstVisibleItemIndex;
+        var newFirstVisibleItemIndex = listComponent->FirstVisibleItemIndex;
 
         //check for scroll or requested color
         if (newFirstVisibleItemIndex != oldFirstVisibleItemIndex)
@@ -190,27 +191,19 @@ public class NativeSocialWindow : IDisposable
         AtkResNode* btnCM = social->GetNodeById(2);
 
         var windowsResNode = social->GetNodeById(6);
+        if (windowsResNode == null) return;
         var windowsResNodeComp = windowsResNode->GetComponent();
         if (windowsResNodeComp == null) return;
-        var windowsResNodeList = windowsResNodeComp->UldManager.NodeList;
 
-        var nineGridFocus = windowsResNodeList[3];
-        var nineGridNoFocus = windowsResNodeList[2];
+        var crossButton = (AtkComponentNode*)windowsResNodeComp->GetNodeById(7);
+        if (crossButton == null) return;
 
-        var crossButton = windowsResNodeList[6];
-        var crossButtonComp = crossButton->GetComponent();
-        if (crossButtonComp == null) return;
-        var crossButtonNodeList = crossButtonComp->UldManager.NodeList;
-        
-        var crossButtonCollision = crossButtonNodeList[0];
-        var crossButtonImg = crossButtonNodeList[1];
-
-        var title = windowsResNodeList[10];
+        var title = windowsResNodeComp->GetTextNodeById(3);
+        if (title == null) return;
 
         windowsResNode->SetPositionShort(0, 0);
         windowsResNode->SetRotationDegrees(0);
         social->SetSize(662, 548);
-        
 
         crossButton->SetPositionShort(629,6);
 
@@ -272,22 +265,15 @@ public class NativeSocialWindow : IDisposable
         AtkResNode* btnCM = social->GetNodeById(2);
 
         var windowsResNode = social->GetNodeById(6);
+        if (windowsResNode == null) return;
         var windowsResNodeComp = windowsResNode->GetComponent();
         if (windowsResNodeComp == null) return;
-        var windowsResNodeList = windowsResNodeComp->UldManager.NodeList;
 
-        var nineGridFocus = windowsResNodeList[3];
-        var nineGridNoFocus = windowsResNodeList[2];
+        var crossButton = (AtkComponentNode*)windowsResNodeComp->GetNodeById(7);
+        if (crossButton == null) return;
 
-        var crossButton = windowsResNodeList[6];
-        var crossButtonComp = crossButton->GetComponent();
-        if (crossButtonComp == null) return;
-        var crossButtonNodeList = crossButtonComp->UldManager.NodeList;
-        
-        var crossButtonCollision = crossButtonNodeList[0];
-        var crossButtonImg = crossButtonNodeList[1];
-
-        var title = windowsResNodeList[10];
+        var title = windowsResNodeComp->GetTextNodeById(3);
+        if (title == null) return;
 
         social->SetSize(40, 126);
         windowsResNode->SetPositionShort(544, 40);
@@ -517,10 +503,10 @@ public class NativeSocialWindow : IDisposable
 
     public unsafe AtkTextNode* GetTextNode(AtkComponentListItemRenderer* item)
     {
-        var node1 = (AtkTextNode*)item->UldManager.NodeList[29];
+        var node1 = item->GetTextNodeById(10);
         if ((node1->NodeFlags & NodeFlags.Visible) == NodeFlags.Visible)
             return node1;
-        var node2 = (AtkTextNode*)item->UldManager.NodeList[31];
+        var node2 = item->GetTextNodeById(8);
         if ((node2->NodeFlags & NodeFlags.Visible) == NodeFlags.Visible)
             return node2;
         return null;
@@ -538,22 +524,30 @@ public class NativeSocialWindow : IDisposable
             return;
         }
 
-        var componentList = friendList->UldManager.NodeList[8]->GetAsAtkComponentList();
+        var listComponentNode = (AtkComponentNode*) friendList->GetNodeById(14);
+        if (listComponentNode is null) return;
+        
+        var listComponent = (AtkComponentList*) listComponentNode->Component;
+        if (listComponent is null) return;
 
-        for (var i = 3; i < 21; i++)
+        foreach(uint nodeId in Enumerable.Range(41001, 17).Prepend(4))
         {
-            var cmplistrdr = componentList->UldManager.NodeList[i]->GetAsAtkComponentListItemRenderer();
-            var textNodeptr = GetTextNode(cmplistrdr);
+            var listItemRenderer = listComponent->UldManager.SearchNodeById<AtkComponentNode>(nodeId);
+            if (listItemRenderer is null) return;
+            var listItemRendererComponent =  (AtkComponentListItemRenderer*) listItemRenderer->Component;
+            if (listItemRendererComponent is null) return;
+
+            var textNodeptr = GetTextNode(listItemRendererComponent);
             if (textNodeptr != null){
-                var col = plugin.Configuration.FriendsColors[proxy->GetEntry((uint)cmplistrdr->ListItemIndex)->ContentId];
+                var proxyEntry = proxy->GetEntry((uint)listItemRendererComponent->ListItemIndex);
+                if (proxyEntry == null) return;
+                var col = plugin.Configuration.FriendsColors[proxyEntry->ContentId];
                 if (col.X + col.Y + col.Z == 3)
                 {
                     col = new Vector4(238f/255f, 225f/255f, 197f/255f, 1);
                 }
-                //var byteCol = RGBAToByteColor(col);
-                //Plugin.Log.Debug($"{textNodeptr->NodeText} {cmplistrdr->ListItemIndex} {proxy->GetEntry((uint)cmplistrdr->ListItemIndex)->ContentId} {col} {byteCol.R} {byteCol.G} {byteCol.B} {byteCol.A}");
-                if (!proxy->GetEntry((uint)cmplistrdr->ListItemIndex)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online) ||
-                 proxy->GetEntry((uint)cmplistrdr->ListItemIndex)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld))
+                if (!proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online) ||
+                 proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld))
                 {
                     textNodeptr->TextColor = RGBAToByteColor(new Vector4(col.X, col.Y, col.Z, 0.5f));
                 }
@@ -577,15 +571,25 @@ public class NativeSocialWindow : IDisposable
             return;
         }
 
-        var componentList = friendList->UldManager.NodeList[8]->GetAsAtkComponentList();
+        var listComponentNode = (AtkComponentNode*) friendList->GetNodeById(14);
+        if (listComponentNode is null) return;
+        
+        var listComponent = (AtkComponentList*) listComponentNode->Component;
+        if (listComponent is null) return;
 
-        for (var i = 3; i < 21; i++)
+        foreach(uint nodeId in Enumerable.Range(41001, 17).Prepend(4))
         {
-            var cmplistrdr = componentList->UldManager.NodeList[i]->GetAsAtkComponentListItemRenderer();
-            var textNodeptr = GetTextNode(cmplistrdr);
+            var listItemRenderer = listComponent->UldManager.SearchNodeById<AtkComponentNode>(nodeId);
+            if (listItemRenderer is null) return;
+            var listItemRendererComponent =  (AtkComponentListItemRenderer*) listItemRenderer->Component;
+            if (listItemRendererComponent is null) return;
+
+            var textNodeptr = GetTextNode(listItemRendererComponent);
             if (textNodeptr != null){
-                if (!proxy->GetEntry((uint)cmplistrdr->ListItemIndex)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online) ||
-                 proxy->GetEntry((uint)cmplistrdr->ListItemIndex)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld))
+                var proxyEntry = proxy->GetEntry((uint)listItemRendererComponent->ListItemIndex);
+                if (proxyEntry == null) return;
+                if (!proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online) ||
+                 proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld))
                 {
                     textNodeptr->TextColor = RGBAToByteColor(128, 128, 128, 255);
                 }
