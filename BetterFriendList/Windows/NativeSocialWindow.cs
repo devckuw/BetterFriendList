@@ -541,7 +541,15 @@ public class NativeSocialWindow : IDisposable
             if (textNodeptr != null){
                 var proxyEntry = proxy->GetEntry((uint)listItemRendererComponent->ListItemIndex);
                 if (proxyEntry == null) return;
-                var col = plugin.Configuration.FriendsColors[proxyEntry->ContentId];
+                //var col = plugin.Configuration.FriendsColors[proxyEntry->ContentId];
+                Vector4 col;
+                if(!plugin.Configuration.FriendsColors.TryGetValue(proxyEntry->ContentId, out col))
+                {
+                    col = new Vector4(1,1,1,1);
+                    plugin.Configuration.FriendsColors.Add(proxyEntry->ContentId, col);
+                    plugin.Configuration.Save();
+                }
+
                 if (col.X + col.Y + col.Z == 3)
                 {
                     col = new Vector4(238f/255f, 225f/255f, 197f/255f, 1);

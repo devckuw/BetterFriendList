@@ -265,7 +265,10 @@ public class InfoProxyManager : IDisposable
         for (int i=0; i < proxy->EntryCount; i++)
         {
             string? note;
-            plugin.Configuration.FriendNotes.TryGetValue(proxy->GetEntry((uint)i)->ContentId, out note);
+            if(!plugin.Configuration.FriendNotes.TryGetValue(proxy->GetEntry((uint)i)->ContentId, out note))
+            {
+                plugin.Configuration.FriendNotes.Add(proxy->GetEntry((uint)i)->ContentId, string.Empty);
+            }
             if (note != null && note != string.Empty)
             {
                 array->SetValue(i*5+3, note);

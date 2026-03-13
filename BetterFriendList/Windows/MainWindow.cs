@@ -114,7 +114,7 @@ public unsafe class MainWindow : Window, IDisposable
         }
         if (dmTargetName != string.Empty && dmTargetWorld != string.Empty)
         {
-            ChatHelper.SetChatDM(dmTargetName, dmTargetWorld);
+            ChatHelper.ExecuteCommand($"/tell {dmTargetName}@{dmTargetWorld}");
             dmTargetName = string.Empty;
             dmTargetWorld = string.Empty;
         }

@@ -96,8 +96,6 @@ public sealed class Plugin : IDalamudPlugin
             HelpMessage = "Alias for /betterfriendlist"
         });
 
-        ChatHelper.Initialize();
-
         PluginInterface.UiBuilder.Draw += DrawUI;
 
         // This adds a button to the plugin installer entry of this plugin which allows
@@ -126,7 +124,6 @@ public sealed class Plugin : IDalamudPlugin
         
         InfoProxyManager.Instance?.Dispose();
         KeyboardHelper.Instance?.Dispose();
-        ChatHelper.Instance?.Dispose();
 
         WindowSystem.RemoveAllWindows();
 
