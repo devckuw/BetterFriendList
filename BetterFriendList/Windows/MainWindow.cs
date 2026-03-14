@@ -810,7 +810,8 @@ public unsafe class MainWindow : Window, IDisposable
         {
             if (!Plugin.Configuration.FriendsColors.ContainsKey(agent->InfoProxy->GetEntry(i)->ContentId))
             {
-                Plugin.Configuration.FriendsColors.Add(agent->InfoProxy->GetEntry(i)->ContentId, new Vector4(255, 255, 255, 1));
+                Plugin.Configuration.FriendsColors.Add(agent->InfoProxy->GetEntry(i)->ContentId, new Vector4(1, 1, 1, 1));
+                Plugin.Configuration.Save();
             }
 
             indexes.Add(new SortingKeys { index = i });
