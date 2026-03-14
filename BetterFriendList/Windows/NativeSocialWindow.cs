@@ -46,10 +46,12 @@ public class NativeSocialWindow : IDisposable
         Plugin.AddonLifeCycle.RegisterListener(AddonEvent.PostSetup, "PartyMemberList", OnPostSetupSubAddon);
         Plugin.AddonLifeCycle.RegisterListener(AddonEvent.PostSetup, "FriendList", OnPostSetupSubAddon);
         Plugin.AddonLifeCycle.RegisterListener(AddonEvent.PostSetup, "SocialList", OnPostSetupSubAddon);
+        Plugin.AddonLifeCycle.RegisterListener(AddonEvent.PostSetup, "ContentMemberList", OnPostSetupSubAddon);
 
         Plugin.AddonLifeCycle.RegisterListener(AddonEvent.PreDraw, "PartyMemberList", OnPreDrawSubAddon);
         Plugin.AddonLifeCycle.RegisterListener(AddonEvent.PreDraw, "FriendList", OnPreDrawSubAddon);
         Plugin.AddonLifeCycle.RegisterListener(AddonEvent.PreDraw, "SocialList", OnPreDrawSubAddon);
+        Plugin.AddonLifeCycle.RegisterListener(AddonEvent.PreDraw, "ContentMemberList", OnPreDrawSubAddon);
 
         Plugin.AddonLifeCycle.RegisterListener(AddonEvent.PostDraw, "FriendList", OnPostDrawFriendList);
 
@@ -73,10 +75,12 @@ public class NativeSocialWindow : IDisposable
         Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PostSetup, "PartyMemberList", OnPostSetupSubAddon);
         Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PostSetup, "FriendList", OnPostSetupSubAddon);
         Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PostSetup, "SocialList", OnPostSetupSubAddon);
+        Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PostSetup, "ContentMemberList", OnPostSetupSubAddon);
 
         Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PreDraw, "PartyMemberList", OnPreDrawSubAddon);
         Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PreDraw, "FriendList", OnPreDrawSubAddon);
         Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PreDraw, "SocialList", OnPreDrawSubAddon);
+        Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PreDraw, "ContentMemberList", OnPreDrawSubAddon);
 
         Plugin.AddonLifeCycle.UnregisterListener(AddonEvent.PostDraw, "FriendList", OnPostDrawFriendList);
 
@@ -169,6 +173,7 @@ public class NativeSocialWindow : IDisposable
         var friendList = (AddonFriendList*)Plugin.GameGui.GetAddonByName("FriendList").Address;
         var partyMembers = (AtkUnitBase*)Plugin.GameGui.GetAddonByName("PartyMemberList").Address;
         var playerSearch = (AtkUnitBase*)Plugin.GameGui.GetAddonByName("SocialList").Address;
+        var adventurerList = (AtkUnitBase*)Plugin.GameGui.GetAddonByName("ContentMemberList").Address;
 
         AtkUnitBase* loaded = null;
 
@@ -183,6 +188,10 @@ public class NativeSocialWindow : IDisposable
         if (playerSearch != null)
         {
             loaded = playerSearch;
+        }
+        if (adventurerList != null)
+        {
+            loaded = adventurerList;
         }
 
         AtkResNode* btnPM = social->GetNodeById(3);
@@ -243,6 +252,7 @@ public class NativeSocialWindow : IDisposable
         var friendList = (AddonFriendList*)Plugin.GameGui.GetAddonByName("FriendList").Address;
         var partyMembers = (AtkUnitBase*)Plugin.GameGui.GetAddonByName("PartyMemberList").Address;
         var playerSearch = (AtkUnitBase*)Plugin.GameGui.GetAddonByName("SocialList").Address;
+        var adventurerList = (AtkUnitBase*)Plugin.GameGui.GetAddonByName("ContentMemberList").Address;
 
         AtkUnitBase* loaded = null;
 
@@ -257,6 +267,10 @@ public class NativeSocialWindow : IDisposable
         if (playerSearch != null)
         {
             loaded = playerSearch;
+        }
+        if (adventurerList != null)
+        {
+            loaded = adventurerList;
         }
 
         AtkResNode* btnPM = social->GetNodeById(3);
