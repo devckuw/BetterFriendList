@@ -1,4 +1,5 @@
 using Dalamud.Game.Text;
+using FFXIVClientStructs.FFXIV.Common.Component.BGCollision;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
@@ -7,6 +8,7 @@ using System.Net.Http;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace BetterFriendList;
 
@@ -21,6 +23,7 @@ public class LodeStoneService
 
     public static void OpenLodestoneProfile(string playerName, string world)
     {
+        //Plugin.Log.Debug($"lodestone is started : {IsStarted}");
         if(IsStarted) return;
         IsStarted = true;
 
@@ -36,7 +39,6 @@ public class LodeStoneService
 
                     string requestName = playerName.Replace(" ", "+");
                     string p = $"lodestone/community/search/?q={requestName}&timezone_info=%7B%22today%22%3A%7B%22method%22%3A%22point%22%2C%22epoch%22%3A{epoch}%2C%22year%22%3A2025%2C%22month%22%3A9%2C%22date%22%3A2%7D%7D&_={sec}";
-
                     using HttpResponseMessage response = await SharedClient.GetAsync(p);
 
                     response.EnsureSuccessStatusCode();
@@ -48,11 +50,10 @@ public class LodeStoneService
 
                     var nodes = doc.DocumentNode.SelectNodes(".//li[@class='entry']");
 
-
                     foreach (var node in nodes ?? new HtmlNodeCollection(null))
                     {
                         if (node.GetAttributeValue("class", "") != "entry" || !node.InnerHtml.Contains("frame__chara__name")) continue;
-                        if (node.SelectSingleNode(".//p[@class='frame__chara__name']").InnerHtml == playerName && node.SelectSingleNode(".//p[@class='frame__chara__world']").InnerHtml.Split(">")[2].Split(" ")[0] == world)
+                        if (WebUtility.HtmlDecode(node.SelectSingleNode(".//p[@class='frame__chara__name']").InnerHtml) == playerName && WebUtility.HtmlDecode(node.SelectSingleNode(".//p[@class='frame__chara__world']").InnerHtml.Split(">")[2].Split(" ")[0]) == world)
                         {
                             string url = $"https://na.finalfantasyxiv.com{node.InnerHtml.Split('"')[1]}";
                             Dalamud.Utility.Util.OpenLink(url);

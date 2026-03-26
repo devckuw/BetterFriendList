@@ -127,7 +127,7 @@ public unsafe class MainWindow : Window, IDisposable
     }
 
     public override void Draw()
-    {
+    {   
         if (!Plugin.ClientState.IsLoggedIn) return;
         if (Plugin.ObjectTable.LocalPlayer == null) return;
         if (!Plugin.PlayerState.IsLoaded) return;
@@ -156,7 +156,6 @@ public unsafe class MainWindow : Window, IDisposable
         {
             Plugin.IsRequestDataAllowed();
         }
-
 #endif
 
         if (lastEntryCount != agent->InfoProxy->EntryCount)
@@ -174,21 +173,6 @@ public unsafe class MainWindow : Window, IDisposable
             return;
         }
 
-        //ImGuiHelpers.CompileSeStringWrapped($"<icon(56)>");
-        //ImGuiHelpers.CompileSeStringWrapped($"<icon(56)> <Gui(12)/> Lorem ipsum dolor <colortype(504)><edgecolortype(505)>sit<colortype(0)><edgecolortype(0)> <italic(1)>amet,<italic(0)> <colortype(500)><edgecolortype(501)>conse<->ctetur<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)><italic(1)>adipi<-><colortype(504)><edgecolortype(505)>scing<colortype(0)><edgecolortype(0)><italic(0)><colortype(0)><edgecolortype(0)> elit. <colortype(502)><edgecolortype(503)>Maece<->nas<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>digni<-><colortype(504)><edgecolortype(505)>ssim<colortype(0)><edgecolortype(0)><colortype(0)><edgecolortype(0)> <colortype(504)><edgecolortype(505)>sem<colortype(0)><edgecolortype(0)> <italic(1)>at<italic(0)> inter<->dum <colortype(500)><edgecolortype(501)>ferme<->ntum.<colortype(0)><edgecolortype(0)> Praes<->ent <colortype(500)><edgecolortype(501)>ferme<->ntum<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>conva<->llis<colortype(0)><edgecolortype(0)> velit <colortype(504)><edgecolortype(505)>sit<colortype(0)><edgecolortype(0)> <italic(1)>amet<italic(0)> <colortype(500)><edgecolortype(501)>hendr<->erit.<colortype(0)><edgecolortype(0)> <colortype(504)><edgecolortype(505)>Sed<colortype(0)><edgecolortype(0)> eu nibh <colortype(502)><edgecolortype(503)>magna.<colortype(0)><edgecolortype(0)> Integ<->er nec lacus in velit porta euism<->od <colortype(504)><edgecolortype(505)>sed<colortype(0)><edgecolortype(0)> et lacus. <colortype(504)><edgecolortype(505)>Sed<colortype(0)><edgecolortype(0)> non <colortype(502)><edgecolortype(503)>mauri<->s<colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>venen<-><italic(1)>atis,<colortype(0)><edgecolortype(0)><italic(0)> <colortype(502)><edgecolortype(503)>matti<->s<colortype(0)><edgecolortype(0)> <colortype(502)><edgecolortype(503)>metus<colortype(0)><edgecolortype(0)> in, <italic(1)>aliqu<->et<italic(0)> dolor. <italic(1)>Aliqu<->am<italic(0)> erat <colortype(500)><edgecolortype(501)>volut<->pat.<colortype(0)><edgecolortype(0)> Nulla <colortype(500)><edgecolortype(501)>venen<-><italic(1)>atis<colortype(0)><edgecolortype(0)><italic(0)> velit <italic(1)>ac<italic(0)> <colortype(504)><edgecolortype(505)><colortype(516)><edgecolortype(517)>sus<colortype(0)><edgecolortype(0)>ci<->pit<colortype(0)><edgecolortype(0)> euism<->od. <colortype(500)><edgecolortype(501)><colortype(504)><edgecolortype(505)><colortype(516)><edgecolortype(517)>sus<colortype(0)><edgecolortype(0)>pe<->ndisse<colortype(0)><edgecolortype(0)><colortype(0)><edgecolortype(0)> <colortype(502)><edgecolortype(503)>maxim<->us<colortype(0)><edgecolortype(0)> viver<->ra dui id dapib<->us. Nam torto<->r dolor, <colortype(500)><edgecolortype(501)>eleme<->ntum<colortype(0)><edgecolortype(0)> quis orci id, pulvi<->nar <colortype(500)><edgecolortype(501)>fring<->illa<colortype(0)><edgecolortype(0)> quam. <colortype(500)><edgecolortype(501)>Pelle<->ntesque<colortype(0)><edgecolortype(0)> laore<->et viver<->ra torto<->r eget <colortype(502)><edgecolortype(503)>matti<-><colortype(504)><edgecolortype(505)>s.<colortype(0)><edgecolortype(0)><colortype(0)><edgecolortype(0)> <colortype(500)><edgecolortype(501)>Vesti<-><bold(1)>bulum<colortype(0)><edgecolortype(0)><bold(0)> eget porta <italic(1)>ante,<italic(0)> a <colortype(502)><edgecolortype(503)>molli<->s<colortype(0)><edgecolortype(0)> nulla. <colortype(500)><edgecolortype(501)>Curab<->itur<colortype(0)><edgecolortype(0)> a ligul<->a leo. <italic(1)>Aliqu<->am<italic(0)> volut<->pat <colortype(504)><edgecolortype(505)>sagit<->tis<colortype(0)><edgecolortype(0)> dapib<->us.");
-        /*for (int i = 1; i < 173; i++)
-        {
-            ImGui.Text($"<icon({i})> => ");
-            ImGui.SameLine();
-            ImGuiHelpers.CompileSeStringWrapped($"<icon({i})>");
-        }
-        //ImGuiHelpers.CompileSeStringWrapped("icon(61502)", this.style);
-        for (int i = 61501; i < 61549; i++)
-        {
-            ImGui.Text($"icon({i}) => ");
-            ImGui.SameLine();
-            ImGuiHelpers.CompileSeStringWrapped($"icon({i})", this.style);
-        }*/
         if (!Plugin.Configuration.SortOnDifferentTab)
         {
             DrawSettingsAbove();
@@ -345,91 +329,94 @@ public unsafe class MainWindow : Window, IDisposable
                 switch (friend->State)
                 {
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld):
-                        status = 35;
+                        status = 61535;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.InDuty):
-                        status = 10;
+                        status = 61510;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.WaitingForDutyFinder):
-                        status = 17;
+                        status = 61517;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.ViewingCutscene):
-                        status = 8;
+                        status = 61508;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.CameraMode):
-                        status = 46;
+                        status = 61546;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AwayFromKeyboard):
-                        status = 11;
+                        status = 61511;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy):
-                        status = 9;
+                        status = 61509;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers):
-                        status = 36;
+                        status = 61536;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PlayingTripleTriad):
-                        status = 39;
+                        status = 61539;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AllianceLeader):
-                        status = 18;
+                        status = 61518;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyLeader):
-                        status = 19;
+                        status = 61519;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember):
-                        status = 20;
+                        status = 61520;
                         break;
-                    case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeaderCrossWorld)://?
-                        status = 21;
+                    case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeaderCrossWorld):
+                        status = 61961;
                         break;
-                    case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeader)://21
-                        status = 21;
+                    case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeader):
+                        status = 61521;
                         break;
-                    case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMemberCrossWorld)://?
-                        status = 22;
+                    case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMemberCrossWorld):
+                        status = 61962;
                         break;
-                    case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMember)://22
-                        status = 22;
+                    case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMember):
+                        status = 61522;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RolePlaying):
-                        status = 45;
+                        status = 61545;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.LookingForParty):
-                        status = 15;
+                        status = 61515;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.LookingToMeldMateria):
-                        status = 14;
+                        status = 61514;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.LookingForRepairs):
-                        status = 12;
+                        status = 61512;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.LookingToRepair):
-                        status = 13;
+                        status = 61513;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Mentor):
-                        status = 40;
+                        status = 61540;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.BattleMentor):
-                        status = 42;
+                        status = 61542;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.TradeMentor):
-                        status = 43;
+                        status = 61543;
+                        break;
+                    case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PvPMentor):
+                        status = 61544;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.NewAdventurer):
-                        status = 23;
+                        status = 61523;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Returner):
-                        status = 47;
+                        status = 61547;
                         break;
                     case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online):
-                        status = 5;
+                        status = 61505;
                         break;
                     default: // Offline 4
-                        status = 4;
+                        status = 61504;
                         break;
                 }
-                ImGuiHelpers.CompileSeStringWrapped($"icon({status + 61500})", this.style);
+                ImGuiHelpers.CompileSeStringWrapped($"icon({status})", this.style);
                 ImGui.SameLine();
                 if (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
                     ImGui.TextColored(Plugin.Configuration.FriendsColors[friend->ContentId], name);
@@ -524,13 +511,13 @@ public unsafe class MainWindow : Window, IDisposable
                     (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeader) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
                     (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMember) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
                     (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeaderCrossWorld) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
-                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMemberCrossWorld) ||
+                    (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMemberCrossWorld) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
+                    (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AllianceLeader) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
                     (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyLeader) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
-                    friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember) ||
+                    (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember) && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy) ||
-                    (!isLeader  && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers))||
-                    isMemberCross)
+                    (!isLeader  && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)))
                 {
                     ImGui.Dummy(new Vector2(27, 20));
                 }
