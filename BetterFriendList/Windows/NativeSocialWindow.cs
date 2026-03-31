@@ -112,7 +112,7 @@ public class NativeSocialWindow : IDisposable
         if (newFirstVisibleItemIndex != oldFirstVisibleItemIndex)
         {
             oldFirstVisibleItemIndex = newFirstVisibleItemIndex;
-            Plugin.Log.Debug("scroll");
+            //Plugin.Log.Debug("scroll");
             ApplyColor();
         }
     }

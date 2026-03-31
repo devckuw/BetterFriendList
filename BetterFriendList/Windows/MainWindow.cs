@@ -160,7 +160,7 @@ public unsafe class MainWindow : Window, IDisposable
 
         if (lastEntryCount != agent->InfoProxy->EntryCount)
         {
-            Plugin.Log.Debug($"{lastEntryCount} => {agent->InfoProxy->EntryCount}");
+            //Plugin.Log.Debug($"{lastEntryCount} => {agent->InfoProxy->EntryCount}");
             lastEntryCount = agent->InfoProxy->EntryCount;
             if (lastEntryCount != 0)
             {
@@ -778,7 +778,7 @@ public unsafe class MainWindow : Window, IDisposable
 
     public void SortFriends()
     {
-        Plugin.Log.Debug($"Sorting triggered on {Plugin.Configuration.Sorting}");
+        //Plugin.Log.Debug($"Sorting triggered on {Plugin.Configuration.Sorting}");
         
         var agent = AgentFriendlist.Instance();
         if (agent == null)

@@ -15,7 +15,9 @@ using KamiToolKit.Extensions;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using Dalamud.Game.ClientState;
-using SamplePlugin;
+using FFXIVClientStructs.FFXIV.Client.Network;
+using FFXIVClientStructs.FFXIV.Application.Network;
+
 using BetterFriendList;
 
 namespace SamplePlugin.GameAddon;
@@ -69,14 +71,20 @@ public class InfoProxyManager : IDisposable
         Plugin.ClientState.TerritoryChanged -= OnTerritoryChanged;
         Plugin.ClientState.ZoneInit -= OnZoneInit;
 
-        applyFiltersHook.Disable();
-        applyFiltersHook.Dispose();
+        applyFiltersHook?.Disable();
+        applyFiltersHook?.Dispose();
 
-        requestDataHook.Disable();
-        requestDataHook.Dispose();
+        requestDataHook?.Disable();
+        requestDataHook?.Dispose();
 
-        endRequestHook.Disable();
-        endRequestHook.Dispose();
+        endRequestHook?.Disable();
+        endRequestHook?.Dispose();
+
+        hookZoneDown?.Disable();
+        hookZoneDown?.Dispose();
+
+        hookZoneUp?.Disable();
+        hookZoneUp?.Dispose();
 
         GC.SuppressFinalize(this);
     }
@@ -94,6 +102,9 @@ public class InfoProxyManager : IDisposable
     public Hook<InfoProxyCommonList.Delegates.ApplyFilters> applyFiltersHook;
     public Hook<InfoProxyCommonList.Delegates.RequestData> requestDataHook;
     private Hook<InfoProxyCommonList.Delegates.EndRequest> endRequestHook;
+    private Hook<PacketDispatcher.Delegates.OnReceivePacket> hookZoneDown;
+    private Hook<ZoneClient.Delegates.SendPacket> hookZoneUp;
+
     private Plugin plugin;
     private bool wasAllowed;
     private uint lastWorld;
@@ -108,6 +119,12 @@ public class InfoProxyManager : IDisposable
 
         endRequestHook = Plugin.GameInteropProvider.HookFromAddress<InfoProxyCommonList.Delegates.EndRequest>(InfoProxyFriendList.Instance()->VirtualTable->EndRequest, EndRequestDetour);
         endRequestHook.Enable();
+
+        hookZoneDown = Plugin.GameInteropProvider.HookFromAddress<PacketDispatcher.Delegates.OnReceivePacket>(PacketDispatcher.StaticVirtualTablePointer->OnReceivePacket, OnReceivePacketDetour);
+        hookZoneDown.Enable();
+
+        hookZoneUp = Plugin.GameInteropProvider.HookFromAddress<ZoneClient.Delegates.SendPacket>(ZoneClient.MemberFunctionPointers.SendPacket, SendPacketDetour);
+        hookZoneUp.Enable();
     }
 
     public void OnLogin()
@@ -205,7 +222,7 @@ public class InfoProxyManager : IDisposable
 #if DEBUG
         if (infoProxyCommonList == InfoProxyFriendList.Instance())
         {
-            Plugin.Log.Debug("friendlist sorting");
+            //Plugin.Log.Debug("friendlist sorting");
         }
 #endif
         applyFiltersHook.Original(infoProxyCommonList);
@@ -232,12 +249,12 @@ public class InfoProxyManager : IDisposable
                 return requestDataHook.Original(infoProxyCommonList);
             }
 #if DEBUG
-            Plugin.Log.Debug("RequestDataDetour friendlist");
+            //Plugin.Log.Debug("RequestDataDetour friendlist");
 #endif
             return true;
         }
 #if DEBUG
-        Plugin.Log.Debug("RequestDataDetour");
+        //Plugin.Log.Debug($"RequestDataDetour {infoProxyCommonList->GetType()}azer");
 #endif
         return requestDataHook.Original(infoProxyCommonList);
     }
@@ -247,10 +264,10 @@ public class InfoProxyManager : IDisposable
 #if DEBUG
         if (infoProxyCommonList == InfoProxyFriendList.Instance())
         {
-            Plugin.Log.Debug("EndRequestDetour friendlist");
+            //Plugin.Log.Debug("EndRequestDetour friendlist");
         }
 #endif
-        //Plugin.Log.Debug("EndRequestDetour");
+        //Plugin.Log.Debug($"EndRequestDetour {infoProxyCommonList->GetType()} azer");
         endRequestHook.Original(infoProxyCommonList);
     }
 
@@ -279,5 +296,35 @@ public class InfoProxyManager : IDisposable
     public void RequestApplyColor()
     {
         plugin.NativeSocialWindow.oldFirstVisibleItemIndex = -1;
+    }
+
+//opcode send solo refresh 522 receive data 705
+//       send global fl 286 receive 426
+    private unsafe void OnReceivePacketDetour(PacketDispatcher* thisPtr, uint targetId, nint packet)
+    {
+        var opCode = *(ushort*)(packet + 2);
+        /*if (opCode == 705)
+        {
+            Plugin.Log.Debug($"solo : {opCode} received");
+        }
+        if (opCode == 426)
+        {
+            Plugin.Log.Debug($"fl : {opCode} received");
+        }*/
+        hookZoneDown.OriginalDisposeSafe(thisPtr, targetId, packet);
+    }
+
+    private unsafe bool SendPacketDetour(ZoneClient* thisPtr, nint packet, uint a3, uint a4, bool a5)
+    {
+        var opCode = *(ushort*)packet;
+        /*if (opCode == 522)
+        {
+            Plugin.Log.Debug($"solo : {opCode} sent");
+        }
+        if (opCode == 286)
+        {
+            Plugin.Log.Debug($"fl : {opCode} sent");
+        }*/
+        return hookZoneUp.OriginalDisposeSafe(thisPtr, packet, a3, a4, a5);
     }
 }
