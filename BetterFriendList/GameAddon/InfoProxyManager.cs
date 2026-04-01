@@ -303,11 +303,12 @@ public class InfoProxyManager : IDisposable
     private unsafe void OnReceivePacketDetour(PacketDispatcher* thisPtr, uint targetId, nint packet)
     {
         var opCode = *(ushort*)(packet + 2);
-        /*if (opCode == 705)
+        if (opCode == 705)
         {
             Plugin.Log.Debug($"solo : {opCode} received");
+            //plugin.MainWindow.SortFriends();
         }
-        if (opCode == 426)
+        /*if (opCode == 426)
         {
             Plugin.Log.Debug($"fl : {opCode} received");
         }*/

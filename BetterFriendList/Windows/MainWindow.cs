@@ -48,6 +48,7 @@ using Lumina.Excel;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Extensions;
 using SamplePlugin.GameAddon;
+using Dalamud.Game;
 
 namespace BetterFriendList.Windows;
 
@@ -70,9 +71,6 @@ public unsafe class MainWindow : Window, IDisposable
     private uint lastEntryCount = 0;
     private List<SortingKeys> sortedIndexes;
 
-    // We give this window a hidden ID using ##
-    // So that the user will see "My Amazing Window" as window title,
-    // but for ImGui the ID is "My Amazing Window##With a hidden ID"
     public MainWindow(Plugin plugin)
         : base("Friend List##9461")
     {
@@ -190,14 +188,10 @@ public unsafe class MainWindow : Window, IDisposable
             ushort playerWorld = 0;
             bool isLeader = true;
             bool isMemberCross = false;
-            //if (Plugin.ClientState.LocalPlayer != null)
             
-            {
-                //playerWorld = (ushort)Plugin.ClientState.LocalPlayer.CurrentWorld.RowId;
-                //playerDataCenter = Plugin.ClientState.LocalPlayer.CurrentWorld.Value.DataCenter.Value.Name.ExtractText();
-                playerWorld = (ushort)Plugin.PlayerState.CurrentWorld.RowId;
-                playerDataCenter = Plugin.PlayerState.CurrentWorld.Value.DataCenter.Value.Name.ExtractText();
-            }
+            playerWorld = (ushort)Plugin.PlayerState.CurrentWorld.RowId;
+            playerDataCenter = Plugin.PlayerState.CurrentWorld.Value.DataCenter.Value.Name.ExtractText();
+            
             if (Plugin.PartyList != null && Plugin.PlayerState.IsLoaded)
             //if (Plugin.PartyList != null && Plugin.ClientState.LocalPlayer != null)
             {
@@ -219,13 +213,8 @@ public unsafe class MainWindow : Window, IDisposable
                         isMemberCross = true; 
                     }
                 }
-                /*else
-                {
-                    Plugin.Log.Debug("is not crossparty");
-                }*/
             }
 
-            //for (var i = 0U; i < agent->InfoProxy->EntryCount; i++)
             foreach (var ind in sortedIndexes)
             {
                 var i = ind.index;
@@ -759,6 +748,51 @@ public unsafe class MainWindow : Window, IDisposable
         }
     }
 
+    struct EntryFriendList
+    {
+        ulong contentId;
+        DisplayGroup grp;
+        InfoProxyCommonList.CharacterData.OnlineStatus onlineStatus;
+        string name;
+        string nameWithGrp;
+        bool[] actions = new bool[5];
+        string job;
+        string location;
+        bool canRefreshSolo;
+        string gcTag;
+        LanguageMask langMask;
+        ClientLanguage clientLang;
+
+        public EntryFriendList(
+            ulong _contentId,
+            DisplayGroup _grp,
+            InfoProxyCommonList.CharacterData.OnlineStatus _onlineStatus,
+            string _name,
+            string _nameWithGrp,
+            bool[] _actions,
+            string _job,
+            string _location,
+            bool _canRefreshSolo,
+            string _gcTag,
+            LanguageMask _langMask,
+            ClientLanguage _clientLang
+        )
+        {
+            contentId = _contentId;
+            grp = _grp;
+            onlineStatus = _onlineStatus;
+            name = _name;
+            nameWithGrp = _nameWithGrp;
+            actions = _actions;
+            job = _job;
+            location = _location;
+            canRefreshSolo = _canRefreshSolo;
+            gcTag = _gcTag;
+            langMask = _langMask;
+            clientLang = _clientLang;
+        }
+    }
+
     public void SortFriends()
     {
         //Plugin.Log.Debug($"Sorting triggered on {Plugin.Configuration.Sorting}");
@@ -918,6 +952,11 @@ public unsafe class MainWindow : Window, IDisposable
         ImGui.BeginChild("settingsright", new Vector2(270, 50));
         DrawGroupTable();
         ImGui.EndChild();
+        /*unsafe {
+            ImGui.SameLine();
+
+            ImGui.Text($"{System.Runtime.InteropServices.Marshal.SizeOf("azer")}");
+        }*/
     }
 
     private void ContextMenus()
