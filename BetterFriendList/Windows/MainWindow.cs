@@ -140,23 +140,6 @@ public unsafe class MainWindow : Window, IDisposable
             ImGui.TextDisabled("Friend list is not loaded.");
             return;
         }
-#if DEBUG
-        if (ImGui.Button("update friends"))
-        {
-            //Plugin.Log.Debug("update request?");
-            Plugin.Log.Debug($"check invite {InfoProxyManager.checkFriendInvite()}");
-            
-        }
-        ImGui.SameLine();
-        
-        ImGui.Text($"flag grp: {grpDisplay}, nb friend: {agent->InfoProxy->EntryCount}");
-
-        ImGui.SameLine();
-        if (ImGui.Button("test IsRequestDataAllowed"))
-        {
-            Plugin.IsRequestDataAllowed();
-        }
-#endif
 
         if (lastEntryCount != agent->InfoProxy->EntryCount)
         {
@@ -178,7 +161,7 @@ public unsafe class MainWindow : Window, IDisposable
             DrawSettingsAbove();
         }
 
-        if (ImGui.BeginTable("friends", 7, ImGuiTableFlags.Resizable | ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg | ImGuiTableFlags.Hideable | ImGuiTableFlags.NoHostExtendX))
+        if (ImGui.BeginTable("friends", 7, ImGuiTableFlags.Resizable | ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg | ImGuiTableFlags.Hideable | ImGuiTableFlags.NoHostExtendX | ImGuiTableFlags.ScrollY | ImGuiTableFlags.ScrollX))
         {
             if (Plugin.Configuration.FixedColumnSize)
             {
