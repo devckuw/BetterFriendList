@@ -71,6 +71,8 @@ public unsafe class MainWindow : Window, IDisposable
     private uint lastEntryCount = 0;
     private List<SortingKeys> sortedIndexes;
 
+    List<EntryFriendList> listEntry = new List<EntryFriendList>();
+
     public MainWindow(Plugin plugin)
         : base("Friend List##9461")
     {
@@ -124,18 +126,45 @@ public unsafe class MainWindow : Window, IDisposable
         return chara == null ? 0 : chara->ContentId;
     }
 
+    public unsafe void DrawOnlineStatus()
+    {
+        var proxy = InfoProxyPartyMember.Instance();
+        if (proxy == null) return;
+        if (!Plugin.ClientState.IsLoggedIn) return;
+        if (!Plugin.PlayerState.IsLoaded) return;
+
+        var maskOnlineStatus = proxy->GetEntryByContentId(Plugin.PlayerState.ContentId)->State;
+
+        ImGui.Text($"localplyaerstatus : {Plugin.ObjectTable.LocalPlayer?.OnlineStatus.Value.Name}");
+        ImGui.Text($"IsGPosing : {Plugin.ClientState.IsGPosing}");
+        ImGui.Text($"Disconnected : {maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Disconnected)}");
+        ImGui.Text($"NotFound : {maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.NotFound)}");
+        ImGui.Text($"Offline : {maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Offline)}");
+        ImGui.Text($"OfflineExd : {maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.OfflineExd)}");
+        ImGui.Text($"Offline clientstate : {!Plugin.ClientState.IsLoggedIn}");
+        ImGui.Text($"Online : {maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online)}");
+        ImGui.Text($"ViewingCutscene : {maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.ViewingCutscene)}");
+        ImGui.Text($"AwayFromKeyboard : {maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AwayFromKeyboard)}");
+        ImGui.Text($"CameraMode : {maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.CameraMode)}");
+        ImGui.Text($"AnotherWorld : {maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld)}");
+        ImGui.Text($"SharingDuty : {maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.SharingDuty)}");
+        ImGui.Text($"SimilarDuty : {maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.SimilarDuty)}");
+    }
+
     public override void Draw()
     {   
+        //FasterDraw();
+        DateTime t = DateTime.UtcNow;
         if (!Plugin.ClientState.IsLoggedIn) return;
         if (Plugin.ObjectTable.LocalPlayer == null) return;
         if (!Plugin.PlayerState.IsLoaded) return;
         var agent = AgentFriendlist.Instance();
         if (agent == null) return;
+        if (agent->InfoProxy == null) return;
 
-        if (agent->InfoProxy == null)
+        if (agent->InfoProxy->EntryCount == 0)
         {
-            ImGui.Separator();
-            ImGui.TextDisabled("Friend list is not loaded.");
+            ImGui.TextDisabled("Friend list is not loaded or no friend.");
             return;
         }
 
@@ -692,6 +721,218 @@ public unsafe class MainWindow : Window, IDisposable
         {
             ContextMenuGlobal();
         }
+        //Plugin.Log.Debug($"draw time: {(DateTime.UtcNow - t).Nanoseconds}ns");
+    }
+
+    public void FasterDraw()
+    {
+        DateTime t = DateTime.UtcNow;
+        if (!Plugin.ClientState.IsLoggedIn) return;
+        if (Plugin.ObjectTable.LocalPlayer == null) return;
+        if (!Plugin.PlayerState.IsLoaded) return;
+        var agent = AgentFriendlist.Instance();
+        if (agent == null) return;
+
+        if (agent->InfoProxy == null)
+        {
+            ImGui.Separator();
+            ImGui.TextDisabled("Friend list is not loaded.");
+            return;
+        }
+
+        if (lastEntryCount != agent->InfoProxy->EntryCount)
+        {
+            //Plugin.Log.Debug($"{lastEntryCount} => {agent->InfoProxy->EntryCount}");
+            lastEntryCount = agent->InfoProxy->EntryCount;
+            if (lastEntryCount != 0)
+            {
+                SortFriends();
+            }
+        }
+
+        if (agent->InfoProxy->EntryCount != sortedIndexes.Count)
+        {
+            return;
+        }
+
+        if (!Plugin.Configuration.SortOnDifferentTab)
+        {
+            DrawSettingsAbove();
+        }
+
+        if (ImGui.BeginTable("friends", 7, ImGuiTableFlags.Resizable | ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg | ImGuiTableFlags.Hideable | ImGuiTableFlags.NoHostExtendX | ImGuiTableFlags.ScrollY | ImGuiTableFlags.ScrollX))
+        {
+            if (Plugin.Configuration.FixedColumnSize)
+            {
+                ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 150);
+                ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 167);
+                ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
+                ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 210);
+                ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 70);
+                ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 30);
+            }
+            else
+            {
+                ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.None, 20);
+                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.None, 150);
+                ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.None, 167);
+                ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.None, 20);
+                ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.None, 210);
+                ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.None, 70);
+                ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.None, 30);
+            }
+
+            ImGui.TableHeadersRow();
+
+            foreach (var ind in sortedIndexes)
+            {
+                var i = ind.index;
+                //var friend = agent->InfoProxy->GetEntry(i);
+                var entry =  listEntry[(int)i];
+                switch (entry.grp)
+                {
+                    case None:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.None)) continue;
+                        break;
+                    case Star:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.Star)) continue;
+                        break;
+                    case Circle:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.Circle)) continue;
+                        break;
+                    case Triangle:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.Triangle)) continue;
+                        break;
+                    case Diamond:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.Diamond)) continue;
+                        break;
+                    case Heart:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.Heart)) continue;
+                        break;
+                    case Spade:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.Spade)) continue;
+                        break;
+                    case Club:
+                        if (!((Grp)grpDisplay).HasFlag(Grp.Club)) continue;
+                        break;
+                    default:
+                        break;
+                }
+                ImGui.TableNextRow();
+
+                ImGui.TableNextColumn();
+                ImGui.Text(entry.grpString);
+
+                ImGui.TableNextColumn();
+                ImGuiHelpers.CompileSeStringWrapped($"icon({entry.onlineStatusIconId})", this.style);
+                ImGui.SameLine();
+                if (entry.isOnline)
+                    ImGui.TextColored(Plugin.Configuration.FriendsColors[entry.contentId], entry.name);
+                else
+                    ImGui.TextColored(new Vector4(Plugin.Configuration.FriendsColors[entry.contentId].AsVector3(), 0.5f), entry.name);
+                if (!Plugin.Configuration.FriendNotes.ContainsKey(entry.contentId))
+                {
+                    Plugin.Configuration.FriendNotes[entry.contentId] = string.Empty;
+                    Plugin.Configuration.Save();
+                }
+                note = Plugin.Configuration.FriendNotes[entry.contentId];
+                if (note != "" && note != null)
+                {
+                    DrawCommon.IsHovered(note);
+                }
+                else
+                {
+                    note = "";
+                }
+                if (ImGui.IsItemHovered())
+                {
+                    ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+                }
+                ImGui.PushID($"{498 + i}");
+                if (ImGui.IsItemClicked())
+                {
+                    color = Plugin.Configuration.FriendsColors[entry.contentId].AsVector3();
+                    note = Plugin.Configuration.FriendNotes[entry.contentId];
+                    ImGui.OpenPopup($"FriendContextMenu##{i}");
+                }
+                if (ImGui.BeginPopup($"FriendContextMenu##{i}"))
+                {
+                    if (ImGui.ColorPicker3($"##colorpicker{i}", ref color, ImGuiColorEditFlags.NoSidePreview | ImGuiColorEditFlags.DisplayRgb | ImGuiColorEditFlags.DisplayHex))
+                    {
+                        Plugin.Configuration.FriendsColors[entry.contentId] = new Vector4(color, 1);
+                        Plugin.Configuration.Save();
+                    }
+                    ImGui.SameLine();
+
+                    if (ImGui.InputTextMultiline($"##multitext{i}", ref note))
+                    {
+                        Plugin.Configuration.FriendNotes[entry.contentId] = note;
+                        Plugin.Configuration.Save();
+                    }
+
+                    ImGui.SetCursorPos(new Vector2(290, 150));
+                    ImGui.Text("Write notes about your friend\nNotes appear on mouse over");
+
+                    ImGui.SetCursorPos(new Vector2(490, 155));
+                    if (ImGui.Button($"LodeStone##lodeStone{i}"))
+                    {
+                        LodeStoneService.OpenLodestoneProfile(entry.name, entry.homeWorld);
+                    }
+                    DrawCommon.IsHovered("Open LodeStone Profile");
+
+                    ImGui.EndPopup();
+                }
+                ImGui.PopID();
+
+                ImGui.TableNextColumn();
+                ImGuiHelpers.CompileSeStringWrapped(entry.job);
+
+                ImGui.TableNextColumn();
+                if (entry.onlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
+                {
+                    ImGui.Text($"{entry.homeWorld}");
+                }
+                else
+                {
+                    ImGui.TextDisabled($"{entry.homeWorld}");
+                }
+                if (entry.canRefreshSolo)
+                {
+                    Span<byte> bytes = Encoding.UTF8.GetBytes($"{entry.nameWithGrp}");
+                    agent->RequestFriendInfo(entry.contentId);
+                }
+
+                ImGui.TableNextColumn();
+                ImGuiHelpers.CompileSeStringWrapped(entry.gcTag);
+
+                ImGui.TableNextColumn();
+                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(1));
+                var dl = ImGui.GetWindowDrawList();
+                ImGui.TextColored(entry.langMask.HasFlag(LanguageMask.Jp) ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey3, "J");
+                if (entry.clientLang == Language.Jp) dl.AddLine(new Vector2(ImGui.GetItemRectMin().X, ImGui.GetItemRectMax().Y + 1), ImGui.GetItemRectMax() + new Vector2(0, 1), 0xFFFFFFFF, 2);
+
+                ImGui.SameLine();
+                ImGui.TextColored(entry.langMask.HasFlag(LanguageMask.En) ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey3, "E");
+                if (entry.clientLang == Language.En) dl.AddLine(new Vector2(ImGui.GetItemRectMin().X, ImGui.GetItemRectMax().Y + 1), ImGui.GetItemRectMax() + new Vector2(0, 1), 0xFFFFFFFF, 2);
+
+                ImGui.SameLine();
+                ImGui.TextColored(entry.langMask.HasFlag(LanguageMask.De) ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey3, "D");
+                if (entry.clientLang == Language.De) dl.AddLine(new Vector2(ImGui.GetItemRectMin().X, ImGui.GetItemRectMax().Y + 1), ImGui.GetItemRectMax() + new Vector2(0, 1), 0xFFFFFFFF, 2);
+
+                ImGui.SameLine();
+                ImGui.TextColored(entry.langMask.HasFlag(LanguageMask.Fr) ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey3, "F");
+                if (entry.clientLang == Language.Fr) dl.AddLine(new Vector2(ImGui.GetItemRectMin().X, ImGui.GetItemRectMax().Y + 1), ImGui.GetItemRectMax() + new Vector2(0, 1), 0xFFFFFFFF, 2);
+                ImGui.PopStyleVar();
+            }
+
+            ImGui.EndTable();
+        }
+        if (Plugin.Configuration.SortOnDifferentTab)
+        {
+            ContextMenuGlobal();
+        }
+        Plugin.Log.Debug($"draw time: {(DateTime.UtcNow - t).Nanoseconds}ns");
     }
 
     private void ContextMenuGlobal()
@@ -750,42 +991,54 @@ public unsafe class MainWindow : Window, IDisposable
 
     struct EntryFriendList
     {
-        ulong contentId;
-        DisplayGroup grp;
-        InfoProxyCommonList.CharacterData.OnlineStatus onlineStatus;
-        string name;
-        string nameWithGrp;
-        bool[] actions = new bool[5];
-        string job;
-        string location;
-        bool canRefreshSolo;
-        string gcTag;
-        LanguageMask langMask;
-        ClientLanguage clientLang;
+        public ulong contentId;
+        public InfoProxyCommonList.DisplayGroup grp;
+        public string grpString;
+        public InfoProxyCommonList.CharacterData.OnlineStatus onlineStatus;
+        public bool isOnline;
+        public int onlineStatusIconId;
+        public string name;
+        public string nameWithGrp;
+        public bool[] actions = new bool[6]; // tp house / invite grp / pf / send tell / adventurer plate / info
+        public string job;
+        public string location;
+        public string homeWorld;
+        public bool canRefreshSolo;
+        public string gcTag;
+        public LanguageMask langMask;
+        public InfoProxyCommonList.CharacterData.Language clientLang;
 
         public EntryFriendList(
             ulong _contentId,
-            DisplayGroup _grp,
+            InfoProxyCommonList.DisplayGroup _grp,
+            string _grpString,
             InfoProxyCommonList.CharacterData.OnlineStatus _onlineStatus,
+            bool _isOnline,
+            int _onlineStatusIconId,
             string _name,
             string _nameWithGrp,
             bool[] _actions,
             string _job,
             string _location,
+            string _homeWorld,
             bool _canRefreshSolo,
             string _gcTag,
             LanguageMask _langMask,
-            ClientLanguage _clientLang
+            InfoProxyCommonList.CharacterData.Language _clientLang
         )
         {
             contentId = _contentId;
             grp = _grp;
+            grpString = _grpString;
             onlineStatus = _onlineStatus;
+            isOnline = _isOnline;
+            onlineStatusIconId = _onlineStatusIconId;
             name = _name;
             nameWithGrp = _nameWithGrp;
             actions = _actions;
             job = _job;
             location = _location;
+            homeWorld = _homeWorld;
             canRefreshSolo = _canRefreshSolo;
             gcTag = _gcTag;
             langMask = _langMask;
@@ -793,9 +1046,306 @@ public unsafe class MainWindow : Window, IDisposable
         }
     }
 
+    public string GetGroupString(InfoProxyCommonList.DisplayGroup group)
+    {
+        switch (group)
+        {
+            case None:
+                return string.Empty;
+            case Star:
+                return $"  ★";
+            case Circle:
+                return $"  ●";
+            case Triangle:
+                return $"  ▲";
+            case Diamond:
+                return $"  ♦";
+            case Heart:
+                return $"  ♥";
+            case Spade:
+                return $"  ♠";
+            case Club:
+                return $"  ♣";
+            default:
+                return string.Empty;
+        }
+    }
+
+    public InfoProxyCommonList.CharacterData.OnlineStatus GetOnlineStatus(InfoProxyCommonList.CharacterData.OnlineStatus State, out int iconId)
+    {
+        switch (State)
+        {
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld):
+                iconId = 61535;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.InDuty):
+                iconId = 61510;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.InDuty;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.WaitingForDutyFinder):
+                iconId = 61517;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.WaitingForDutyFinder;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.ViewingCutscene):
+                iconId = 61508;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.ViewingCutscene;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.CameraMode):
+                iconId = 61546;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.CameraMode;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AwayFromKeyboard):
+                iconId = 61511;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.AwayFromKeyboard;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy):
+                iconId = 61509;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.Busy;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers):
+                iconId = 61536;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PlayingTripleTriad):
+                iconId = 61539;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.PlayingTripleTriad;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AllianceLeader):
+                iconId = 61518;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.AllianceLeader;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyLeader):
+                iconId = 61519;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyLeader;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember):
+                iconId = 61520;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeaderCrossWorld):
+                iconId = 61961;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeaderCrossWorld;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeader):
+                iconId = 61521;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeader;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMemberCrossWorld):
+                iconId = 61962;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.PartyMemberCrossWorld;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMember):
+                iconId = 61522;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.PartyMember;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RolePlaying):
+                iconId = 61545;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.RolePlaying;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.LookingForParty):
+                iconId = 61515;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.LookingForParty;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.LookingToMeldMateria):
+                iconId = 61514;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.LookingToMeldMateria;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.LookingForRepairs):
+                iconId = 61512;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.LookingForRepairs;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.LookingToRepair):
+                iconId = 61513;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.LookingToRepair;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Mentor):
+                iconId = 61540;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.Mentor;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.BattleMentor):
+                iconId = 61542;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.BattleMentor;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.TradeMentor):
+                iconId = 61543;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.TradeMentor;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PvPMentor):
+                iconId = 61544;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.PvPMentor;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.NewAdventurer):
+                iconId = 61523;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.NewAdventurer;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Returner):
+                iconId = 61547;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.Returner;
+            case var s when s.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online):
+                iconId = 61505;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.Online;
+            default: // Offline 4
+                iconId = 61504;
+                return InfoProxyCommonList.CharacterData.OnlineStatus.Offline;
+        }
+    }
+
+    
+
+    public unsafe void FillEntryFriendList()
+    {
+        listEntry.Clear();
+        DateTime t0 = DateTime.UtcNow;
+        var agent = AgentFriendlist.Instance();
+        if (agent == null)
+        {
+            Plugin.Log.Debug($"agent null => no sorting");
+            return;
+        }
+        if (agent->InfoProxy == null)
+        {
+            Plugin.Log.Debug($"proxy null => no sorting");
+            return;
+        }
+        int totalSize = 0;
+        for (uint i = 0 ; i < agent->InfoProxy->EntryCount; i++)
+        {
+            var proxyEntry = agent->InfoProxy->GetEntry(i);
+
+            Plugin.DataManager.GetExcelSheet<World>().TryGetRow(proxyEntry->CurrentWorld, out var friendCurrentWorld);
+            Plugin.DataManager.GetExcelSheet<World>().TryGetRow(proxyEntry->HomeWorld, out var friendHomeWorld);
+            var playerWorld = (ushort)Plugin.PlayerState.CurrentWorld.RowId;
+            var playerDataCenter = Plugin.PlayerState.CurrentWorld.Value.DataCenter.Value.Name.ExtractText();
+
+            int statusId;
+            var status = GetOnlineStatus(proxyEntry->State, out statusId);
+            string jobString;
+            string grpString = GetGroupString(proxyEntry->Group);
+            var _nameWithGrp = grpString + proxyEntry->NameString;
+
+            if (!Plugin.DataManager.GetExcelSheet<ClassJob>().TryGetRow(proxyEntry->Job, out var jobSheet))
+            {
+                jobString = string.Empty;
+            }
+            else
+            {
+                switch (jobSheet.RowId)
+                {
+                    case 0:
+                        jobString = string.Empty;
+                        break;
+                    case < 41:
+                        jobString = ((Icons)jobSheet.RowId + 127).toBaliseString();
+                        break;
+                    default:;
+                        jobString = ((Icons)jobSheet.RowId + 129).toBaliseString();
+                        break;
+                }
+
+            }
+            bool _canRefreshSolo = false;
+            string _location;
+            if (!Plugin.DataManager.GetExcelSheet<TerritoryType>().TryGetRow(proxyEntry->Location, out var location))
+            {
+                if (proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
+                {
+                    _location = friendCurrentWorld.Name.ExtractText();
+                }
+                else
+                {
+                    _location = friendCurrentWorld.Name.ExtractText();
+                }
+                
+                if (proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online) && friendCurrentWorld.RowId == playerWorld)
+                    _canRefreshSolo = true;
+                if (proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online) && friendCurrentWorld.RowId != playerWorld)
+                    _canRefreshSolo = true;
+                if (proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Offline) && friendCurrentWorld.RowId != playerWorld)
+                    _canRefreshSolo = true;
+            }
+            else
+            {
+                _location = location.PlaceName.Value.Name.ExtractText();
+            }
+
+            string _gcTag;
+            switch (proxyEntry->GrandCompany)
+            {
+                case FFXIVClientStructs.FFXIV.Client.UI.Agent.GrandCompany.TwinAdder:
+                    _gcTag = $"{Icons.Gridania.toBaliseString()} {proxyEntry->FCTagString}";
+                    break;
+                case FFXIVClientStructs.FFXIV.Client.UI.Agent.GrandCompany.Maelstrom:
+                    _gcTag = $"{Icons.Limsa.toBaliseString()} {proxyEntry->FCTagString}";
+                    break;
+                case FFXIVClientStructs.FFXIV.Client.UI.Agent.GrandCompany.ImmortalFlames:
+                    _gcTag = $"{Icons.Uldah.toBaliseString()} {proxyEntry->FCTagString}";
+                    break;
+                default:
+                    _gcTag = $"{proxyEntry->FCTagString}";
+                    break;
+            }
+
+            bool isLeader = true;
+            if (Plugin.PartyList.Count > 1)
+                isLeader = Plugin.PartyList[(int)Plugin.PartyList.PartyLeaderIndex].ContentId == (long)Plugin.PlayerState.ContentId;
+
+            // tp house / invite grp / pf / send tell / adventurer plate / info
+            bool[] _actions = [false, false, false, false, false, false];
+
+            _actions[0] = Plugin.PlayerState.CurrentWorld.RowId == proxyEntry->HomeWorld;
+            if (proxyEntry->State == 0 ||
+                !friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter) ||
+                (proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeader) && !proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
+                (proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMember) && !proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
+                (proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyLeaderCrossWorld) && !proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
+                (proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.PartyMemberCrossWorld) && !proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
+                (proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AllianceLeader) && !proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
+                (proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyLeader) && !proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
+                (proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AlliancePartyMember) && !proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)) ||
+                proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld) ||
+                proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy) ||
+                (!isLeader  && !proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)))
+            {
+                // 1&2 => false
+            }
+            else
+            {
+                if (proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers))
+                {
+                    //pf true
+                    _actions[2] = true;
+                }
+                else
+                {
+                    //invite true
+                    _actions[1] = true;
+                }
+            }
+            if (proxyEntry->State == 0 || !friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter) ||
+                proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld) || proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy))
+            {
+                // tell false
+            }
+            else
+            {
+                //tell true
+                _actions[3] = true;
+            }
+            if (friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter))
+            {
+                // advenrturer plate
+                _actions[4] = true;
+            }
+            if (proxyEntry->CurrentWorld == playerWorld)
+            {
+                //info
+                _actions[5] = true;
+            }
+
+            var entry = new EntryFriendList (
+                proxyEntry->ContentId,
+                proxyEntry->Group,
+                grpString,
+                status,
+                proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online),
+                statusId,
+                proxyEntry->NameString,
+                _nameWithGrp,
+                _actions,
+                jobString,
+                _location,
+                friendHomeWorld.Name.ExtractText(),
+                _canRefreshSolo,
+                _gcTag,
+                proxyEntry->Languages,
+                proxyEntry->ClientLanguage
+            );
+            listEntry.Add(entry);
+            totalSize += System.Runtime.InteropServices.Marshal.SizeOf(entry);
+        }
+        //Plugin.Log.Debug($"size:{totalSize} in {(DateTime.UtcNow - t0).Nanoseconds}ns");
+    }
+
+
     public void SortFriends()
     {
         //Plugin.Log.Debug($"Sorting triggered on {Plugin.Configuration.Sorting}");
+        FillEntryFriendList();
         
         var agent = AgentFriendlist.Instance();
         if (agent == null)

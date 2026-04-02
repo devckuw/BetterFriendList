@@ -166,11 +166,45 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
+    public unsafe static bool doesOnlineStatusAllowRefresh()
+    {
+        var proxy = InfoProxyPartyMember.Instance();
+        if (proxy == null)
+        {
+            Plugin.Log.Debug("InfoProxyPartyMember not loaded");
+            return false;
+        }
+        if (!Plugin.PlayerState.IsLoaded) return false;
+
+        var maskOnlineStatus = proxy->GetEntryByContentId(Plugin.PlayerState.ContentId)->State;
+
+        if (
+            maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Disconnected) ||
+            maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.NotFound) ||
+            maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.OfflineExd) ||
+            maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.ViewingCutscene) ||
+            maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AwayFromKeyboard) ||
+            maskOnlineStatus.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.CameraMode)
+        )
+        {
+            Plugin.Log.Debug($"Refresh NOT allowed -- OnlineStatus");
+            return false;
+        }
+        return true;
+    }
+
     public static bool IsRequestDataAllowed()
     {
         // https://github.com/nebel/xivPartyIcons/blob/main/PartyIcons/Runtime/ViewModeSetter.cs line 75
         if (!ClientState.IsLoggedIn)
             return false;
+
+        if (ClientState.IsGPosing)
+            return false;
+        if (!doesOnlineStatusAllowRefresh())
+        {
+            return false;
+        }
         ExcelSheet<ContentFinderCondition> _contentFinderConditionsSheet = Plugin.DataManager.GameData.GetExcelSheet<ContentFinderCondition>() ?? throw new InvalidOperationException();
 
         var maybeContent = _contentFinderConditionsSheet.FirstOrNull(t => t.TerritoryType.RowId == Plugin.ClientState.TerritoryType);
