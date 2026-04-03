@@ -39,13 +39,13 @@ public class InfoProxyManager : IDisposable
             wasAllowed = Plugin.IsRequestDataAllowed();
             lastWorld = Plugin.PlayerState.CurrentWorld.RowId;
 #if DEBUG
-            Plugin.Log.Debug($"Loading plugin but Logged In => wasAllowed = true worldid:{lastWorld}");
+            Plugin.Log.Debug($"Loading plugin but Logged In => wasAllowed = {wasAllowed} worldid:{lastWorld}");
 #endif
         }
         else
         {
 #if DEBUG
-            Plugin.Log.Debug($"Loading plugin but Logged Out => wasAllowed = false worldid:random");
+            Plugin.Log.Debug($"Loading plugin but Logged Out => wasAllowed = false worldid: uint.MaxValue");
 #endif
             wasAllowed = false;
             lastWorld = uint.MaxValue;
@@ -153,7 +153,7 @@ public class InfoProxyManager : IDisposable
     public unsafe void OnTerritoryChanged(ushort id)
     {
 #if DEBUG
-        Plugin.Log.Debug($"Territory Changed : {id}");
+        Plugin.Log.Debug($"Territory Changed : {id} // wasAllowed:{wasAllowed}");
 #endif
 
         bool isAllowed = Plugin.IsRequestDataAllowed();
@@ -163,10 +163,19 @@ public class InfoProxyManager : IDisposable
             if (!plugin.Configuration.RefreshFriendOnOpenNative)
             {
                 requestDataHook.Original((InfoProxyCommonList*)InfoProxyFriendList.Instance());
+                Plugin.Log.Debug("trigger refresh exiting isntance");
             }
+            else
+            {
+                Plugin.Log.Debug("No trigger refresh => RefreshFriendOnOpenNative =  true");
+            }/*
 #if DEBUG
             Plugin.Log.Debug("trigger refresh");
-#endif
+#endif*/
+        }
+        else
+        {
+            Plugin.Log.Debug($"No trigger -- IsRequestDataAllowed = {isAllowed} /  wasAllowed = {wasAllowed}");
         }
         wasAllowed = isAllowed;
     }
@@ -174,24 +183,39 @@ public class InfoProxyManager : IDisposable
     public unsafe void OnZoneInit(ZoneInitEventArgs args)
     {
 #if DEBUG
-        Plugin.Log.Debug($"Zone Init : {args.TerritoryType.RowId} {Plugin.ClientState.IsLoggedIn} {Plugin.PlayerState.CurrentWorld.Value.Name}");
+        //Plugin.Log.Debug($"Zone Init : {args.TerritoryType.RowId} {Plugin.ClientState.IsLoggedIn} {Plugin.PlayerState.CurrentWorld.Value.Name}");
+        Plugin.Log.Debug($"Zone Init : {args.TerritoryType.RowId} {Plugin.ClientState.IsLoggedIn} {Plugin.PlayerState.CurrentWorld.Value.Name} // wasAllowed:{wasAllowed} // lastworld:{lastWorld}");
 #endif
 
         if (Plugin.PlayerState.CurrentWorld.RowId != lastWorld)
         {
+            bool isAllowed = Plugin.IsRequestDataAllowed();
             lastWorld = Plugin.PlayerState.CurrentWorld.RowId;
             wasAllowed = false;
-            if (wasAllowed == false && Plugin.IsRequestDataAllowed())
+            if (!wasAllowed && isAllowed)
             {
                 wasAllowed = true;
                 if (!plugin.Configuration.RefreshFriendOnOpenNative)
                 {
                     requestDataHook.Original((InfoProxyCommonList*)InfoProxyFriendList.Instance());
+                    Plugin.Log.Debug("trigger refresh -- Different world");
                 }
+                else
+                {
+                    Plugin.Log.Debug("No trigger refresh => RefreshFriendOnOpenNative =  true");
+                }/*
 #if DEBUG
                 Plugin.Log.Debug("trigger refresh");
-#endif
+#endif*/
             }
+            else
+            {
+                Plugin.Log.Debug($"No trigger -- IsRequestDataAllowed = false");
+            }
+        }
+        else
+        {
+            Plugin.Log.Debug($"No trigger -- Same world");
         }
     }
 

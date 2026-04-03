@@ -174,7 +174,18 @@ public sealed class Plugin : IDalamudPlugin
             Plugin.Log.Debug("InfoProxyPartyMember not loaded");
             return false;
         }
-        if (!Plugin.PlayerState.IsLoaded) return false;
+        if (!Plugin.PlayerState.IsLoaded){
+            Plugin.Log.Debug("PlayerState.IsLoaded = false");
+            return false;
+        }
+
+        if (proxy->EntryCount < 1)
+        {
+            // only happens on first log in
+            Plugin.Log.Debug($"InfoProxyPartyMember not filled yet");
+            return true;
+        }
+        Plugin.Log.Debug($"InfoProxyPartyMember EntryCount {proxy->EntryCount}");
 
         var maskOnlineStatus = proxy->GetEntryByContentId(Plugin.PlayerState.ContentId)->State;
 
@@ -197,12 +208,18 @@ public sealed class Plugin : IDalamudPlugin
     {
         // https://github.com/nebel/xivPartyIcons/blob/main/PartyIcons/Runtime/ViewModeSetter.cs line 75
         if (!ClientState.IsLoggedIn)
+        {
+            Log.Debug($"Refresh NOT allowed -- Not Logged In");
             return false;
-
+        }
         if (ClientState.IsGPosing)
+        {
+            Log.Debug($"Refresh NOT allowed -- Gposing");
             return false;
+        }
         if (!doesOnlineStatusAllowRefresh())
         {
+            Log.Debug($"Refresh NOT allowed -- OnlineStatus fct");
             return false;
         }
         ExcelSheet<ContentFinderCondition> _contentFinderConditionsSheet = Plugin.DataManager.GameData.GetExcelSheet<ContentFinderCondition>() ?? throw new InvalidOperationException();
