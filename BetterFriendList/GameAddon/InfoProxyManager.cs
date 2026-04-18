@@ -8,6 +8,7 @@ using Lumina.Excel.Sheets;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Addon.Lifecycle;
 using KamiToolKit.Nodes;
@@ -17,6 +18,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using Dalamud.Game.ClientState;
 using FFXIVClientStructs.FFXIV.Client.Network;
 using FFXIVClientStructs.FFXIV.Application.Network;
+using System.Runtime.InteropServices;
 
 using BetterFriendList;
 
@@ -86,6 +88,9 @@ public class InfoProxyManager : IDisposable
         hookZoneUp?.Disable();
         hookZoneUp?.Dispose();
 
+        fireCallbackHook?.Disable();
+        fireCallbackHook?.Dispose();
+
         GC.SuppressFinalize(this);
     }
 
@@ -104,10 +109,12 @@ public class InfoProxyManager : IDisposable
     private Hook<InfoProxyCommonList.Delegates.EndRequest> endRequestHook;
     private Hook<PacketDispatcher.Delegates.OnReceivePacket> hookZoneDown;
     private Hook<ZoneClient.Delegates.SendPacket> hookZoneUp;
+    private Hook<AtkUnitBase.Delegates.FireCallback> fireCallbackHook;
 
     private Plugin plugin;
     private bool wasAllowed;
     private uint lastWorld;
+    private bool allowRequestForHousingMate = false;
 
     public unsafe void SetupHook()
     {
@@ -125,6 +132,9 @@ public class InfoProxyManager : IDisposable
 
         hookZoneUp = Plugin.GameInteropProvider.HookFromAddress<ZoneClient.Delegates.SendPacket>(ZoneClient.MemberFunctionPointers.SendPacket, SendPacketDetour);
         hookZoneUp.Enable();
+
+        fireCallbackHook = Plugin.GameInteropProvider.HookFromSignature<AtkUnitBase.Delegates.FireCallback>("E8 ?? ?? ?? ?? 0F B6 E8 8B 44 24 20", FireCallbackDetour);
+        fireCallbackHook.Enable(); //https://github.com/Caraxi/SimpleTweaksPlugin/blob/main/Debugging/AddonDebug.cs L127
     }
 
     public void OnLogin()
@@ -265,7 +275,11 @@ public class InfoProxyManager : IDisposable
 
     public unsafe bool RequestDataDetour(InfoProxyCommonList* infoProxyCommonList)
     {   
-
+        if (allowRequestForHousingMate)
+        {
+            allowRequestForHousingMate = false;
+            return requestDataHook.Original(infoProxyCommonList);
+        }
         if (infoProxyCommonList == InfoProxyFriendList.Instance() && !plugin.Configuration.RefreshFriendOnOpenNative)
         {
             if (checkFriendInvite())
@@ -278,7 +292,7 @@ public class InfoProxyManager : IDisposable
             return true;
         }
 #if DEBUG
-        //Plugin.Log.Debug($"RequestDataDetour {infoProxyCommonList->GetType()}azer");
+        Plugin.Log.Debug($"RequestDataDetour ");
 #endif
         return requestDataHook.Original(infoProxyCommonList);
     }
@@ -351,5 +365,30 @@ public class InfoProxyManager : IDisposable
             Plugin.Log.Debug($"fl : {opCode} sent");
         }*/
         return hookZoneUp.OriginalDisposeSafe(thisPtr, packet, a3, a4, a5);
+    }
+
+    public unsafe bool FireCallbackDetour(AtkUnitBase* atkUnitBase, uint valueCount, AtkValue* values, bool close) {
+        var ret = fireCallbackHook.Original(atkUnitBase, valueCount, values, close);
+
+        if (valueCount != 1)
+        {
+            return ret;
+        }
+        if (values->Type != ValueType.Int)
+        {
+            return ret;
+        }
+        if (values->Int != 7)
+        {
+            return ret;
+        }
+        if (atkUnitBase->NameString != "HousingSubmenu")
+        {
+            return ret;
+        }
+        Plugin.Log.Debug("allow one request to fill the Housing Mate addon");
+        allowRequestForHousingMate = true; //allow one request to fill the Housing Mate addon
+        return ret;
+
     }
 }
