@@ -16,7 +16,6 @@ using Lumina.Excel.Sheets;
 using System;
 using Lumina.Extensions;
 using KamiToolKit;
-using SamplePlugin.GameAddon;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using System.Collections.Generic;
 using System.Numerics;

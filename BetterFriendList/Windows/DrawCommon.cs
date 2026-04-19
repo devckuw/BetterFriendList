@@ -9,7 +9,6 @@ using BetterFriendList.GameAddon;
 using BetterFriendList;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
-using SamplePlugin.GameAddon;
 
 namespace BetterFriendList.Windows
 {

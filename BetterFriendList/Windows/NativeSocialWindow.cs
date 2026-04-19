@@ -13,7 +13,7 @@ using KamiToolKit.Nodes;
 using KamiToolKit.Extensions;
 using System.Collections.Generic;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using SamplePlugin.GameAddon;
+using BetterFriendList.GameAddon;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Graphics;

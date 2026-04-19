@@ -5,7 +5,7 @@ using Dalamud.Interface.Windowing;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Common.Lua;
 using Lumina.Excel.Sheets;
-using SamplePlugin.GameAddon;
+using BetterFriendList.GameAddon;
 using Serilog;
 using System;
 using System.Collections.Generic;

@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
 
 using BetterFriendList;
 
-namespace SamplePlugin.GameAddon;
+namespace BetterFriendList.GameAddon;
 public class InfoProxyManager : IDisposable
 {
     private InfoProxyManager(Plugin p)

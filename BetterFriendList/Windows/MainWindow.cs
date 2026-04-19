@@ -47,7 +47,6 @@ using System.Data.Common;
 using Lumina.Excel;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Extensions;
-using SamplePlugin.GameAddon;
 using Dalamud.Game;
 
 namespace BetterFriendList.Windows;
@@ -475,12 +474,12 @@ public unsafe class MainWindow : Window, IDisposable
                     ImGui.SetCursorPos(new Vector2(290, 150));
                     ImGui.Text("Write notes about your friend\nNotes appear on mouse over");
 
-                    ImGui.SetCursorPos(new Vector2(490, 155));
+                    /*ImGui.SetCursorPos(new Vector2(490, 155));
                     if (ImGui.Button($"LodeStone##lodeStone{i}"))
                     {
                         LodeStoneService.OpenLodestoneProfile(friend->NameString, friendHomeWorld.Name.ExtractText());
                     }
-                    DrawCommon.IsHovered("Open LodeStone Profile");
+                    DrawCommon.IsHovered("Open LodeStone Profile");*/
 
                     ImGui.EndPopup();
                 }
