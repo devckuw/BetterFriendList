@@ -72,6 +72,8 @@ public unsafe class MainWindow : Window, IDisposable
 
     List<EntryFriendList> listEntry = new List<EntryFriendList>();
 
+    LodeStoneService lodeStoneService;
+
     public MainWindow(Plugin plugin)
         : base("Friend List##9461")
     {
@@ -89,6 +91,7 @@ public unsafe class MainWindow : Window, IDisposable
         Plugin.Framework.Update += OnUpdate;
         onlineFirst = Plugin.Configuration.OnlineFirst;
         sortedIndexes = new List<SortingKeys>();
+        lodeStoneService = new LodeStoneService();
     }
 
     public override void OnOpen()
@@ -99,6 +102,7 @@ public unsafe class MainWindow : Window, IDisposable
     public void Dispose()
     {
         Plugin.Framework.Update -= OnUpdate;
+        lodeStoneService.Dispose();
     }
 
     private void OnUpdate(IFramework framework)
@@ -474,12 +478,12 @@ public unsafe class MainWindow : Window, IDisposable
                     ImGui.SetCursorPos(new Vector2(290, 150));
                     ImGui.Text("Write notes about your friend\nNotes appear on mouse over");
 
-                    /*ImGui.SetCursorPos(new Vector2(490, 155));
+                    ImGui.SetCursorPos(new Vector2(490, 155));
                     if (ImGui.Button($"LodeStone##lodeStone{i}"))
                     {
-                        LodeStoneService.OpenLodestoneProfile(friend->NameString, friendHomeWorld.Name.ExtractText());
+                        lodeStoneService.OpenLodestoneProfile(friend->NameString, friendHomeWorld.Name.ExtractText());
                     }
-                    DrawCommon.IsHovered("Open LodeStone Profile");*/
+                    DrawCommon.IsHovered("Open LodeStone Profile");
 
                     ImGui.EndPopup();
                 }
@@ -876,7 +880,7 @@ public unsafe class MainWindow : Window, IDisposable
                     ImGui.SetCursorPos(new Vector2(490, 155));
                     if (ImGui.Button($"LodeStone##lodeStone{i}"))
                     {
-                        LodeStoneService.OpenLodestoneProfile(entry.name, entry.homeWorld);
+                        lodeStoneService.OpenLodestoneProfile(entry.name, entry.homeWorld);
                     }
                     DrawCommon.IsHovered("Open LodeStone Profile");
 

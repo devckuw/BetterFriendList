@@ -1,6 +1,5 @@
 using Dalamud.Game.Text;
 using FFXIVClientStructs.FFXIV.Common.Component.BGCollision;
-using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,23 +8,43 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net;
+using NetStone;
+using NetStone.Search.Character;
+using Dalamud.Utility;
 
 namespace BetterFriendList;
 
-public class LodeStoneService
+public class LodeStoneService : IDisposable
 {
+    LodestoneClient? client;
 
-    private static bool IsStarted = false;
-    private static HttpClient SharedClient = new()
+    public LodeStoneService()
     {
-        BaseAddress = new Uri("https://na.finalfantasyxiv.com"),
-    };
+        SetupClient();
+    }
 
-    public static void OpenLodestoneProfile(string playerName, string world)
+    public void Dispose()
     {
-        //Plugin.Log.Debug($"lodestone is started : {IsStarted}");
-        if(IsStarted) return;
-        IsStarted = true;
+        client?.Dispose();
+    }
+
+    public async void SetupClient()
+    {
+        try{
+	        client = await LodestoneClient.GetClientAsync();
+        } catch(HttpRequestException ex){
+            client = null;
+        }
+        return;
+    }
+
+    public void OpenLodestoneProfile(string name, string server)
+    {   
+        if (client == null)
+        {
+            Plugin.Log.Debug($"client not setup");
+            return;
+        }
 
         try
         {
@@ -33,46 +52,34 @@ public class LodeStoneService
             {
                 try
                 {
-                    DateTimeOffset timeOffset = DateTimeOffset.UtcNow;
-                    var sec = timeOffset.ToUnixTimeSeconds();
-                    var epoch = sec - (sec % 86400) - 7200;
-
-                    string requestName = playerName.Replace(" ", "+");
-                    string p = $"lodestone/community/search/?q={requestName}&timezone_info=%7B%22today%22%3A%7B%22method%22%3A%22point%22%2C%22epoch%22%3A{epoch}%2C%22year%22%3A2025%2C%22month%22%3A9%2C%22date%22%3A2%7D%7D&_={sec}";
-                    using HttpResponseMessage response = await SharedClient.GetAsync(p);
-
-                    response.EnsureSuccessStatusCode();
-
-                    var jsonResponse = await response.Content.ReadAsStringAsync();
-
-                    var doc = new HtmlDocument();
-                    doc.LoadHtml(jsonResponse);
-
-                    var nodes = doc.DocumentNode.SelectNodes(".//li[@class='entry']");
-
-                    foreach (var node in nodes ?? new HtmlNodeCollection(null))
+                    var searchResponse = await client.SearchCharacter(new CharacterSearchQuery()
                     {
-                        if (node.GetAttributeValue("class", "") != "entry" || !node.InnerHtml.Contains("frame__chara__name")) continue;
-                        if (WebUtility.HtmlDecode(node.SelectSingleNode(".//p[@class='frame__chara__name']").InnerHtml) == playerName && WebUtility.HtmlDecode(node.SelectSingleNode(".//p[@class='frame__chara__world']").InnerHtml.Split(">")[2].Split(" ")[0]) == world)
-                        {
-                            string url = $"https://na.finalfantasyxiv.com{node.InnerHtml.Split('"')[1]}";
-                            Dalamud.Utility.Util.OpenLink(url);
-                            break;
-                        }
+                        CharacterName = name,
+                        World = server
+                    });
+                    var lodestoneCharacter = 
+                        searchResponse?.Results
+                        .FirstOrDefault(entry => entry.Name == name);
+                    
+                    if (lodestoneCharacter == null)
+                    {
+                        Plugin.Log.Debug("profile not found");
+                        return;
                     }
+                    string lodestoneId = lodestoneCharacter.Id;
+                    //Plugin.Log.Debug($"lodestone id : {lodestoneId}");
+                    string url = $"https://na.finalfantasyxiv.com/lodestone/character/{lodestoneId}/";
+                    Dalamud.Utility.Util.OpenLink(url);
                 }
-                catch (Exception ex)
+                catch (HttpRequestException e)
                 {
-                    Plugin.Log.Error(ex, "Failed to open lodestone profile");
-                    IsStarted = false;
+                    Plugin.Log.Debug("lodestone request diodnt work");
                 }
-                IsStarted = false;
             });
         }
-        catch (Exception ex)
+        catch
         {
-            Plugin.Log.Error(ex, "Failed to open lodestone profile");
-            IsStarted = false;
+            Plugin.Log.Debug("lodestone request diodnt work");
         }
     }
 
