@@ -133,8 +133,8 @@ public class InfoProxyManager : IDisposable
         hookZoneUp = Plugin.GameInteropProvider.HookFromAddress<ZoneClient.Delegates.SendPacket>(ZoneClient.MemberFunctionPointers.SendPacket, SendPacketDetour);
         hookZoneUp.Enable();
 
-        fireCallbackHook = Plugin.GameInteropProvider.HookFromSignature<AtkUnitBase.Delegates.FireCallback>("E8 ?? ?? ?? ?? 0F B6 E8 8B 44 24 20", FireCallbackDetour);
-        fireCallbackHook.Enable(); //https://github.com/Caraxi/SimpleTweaksPlugin/blob/main/Debugging/AddonDebug.cs L127
+        fireCallbackHook = Plugin.GameInteropProvider.HookFromAddress<AtkUnitBase.Delegates.FireCallback>(AtkUnitBase.MemberFunctionPointers.FireCallback, FireCallbackDetour);
+        fireCallbackHook.Enable();
     }
 
     public void OnLogin()
