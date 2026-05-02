@@ -8,7 +8,6 @@ using Lumina.Excel.Sheets;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Addon.Lifecycle;
 using KamiToolKit.Nodes;
@@ -73,22 +72,16 @@ public class InfoProxyManager : IDisposable
         Plugin.ClientState.TerritoryChanged -= OnTerritoryChanged;
         Plugin.ClientState.ZoneInit -= OnZoneInit;
 
-        applyFiltersHook?.Disable();
         applyFiltersHook?.Dispose();
 
-        requestDataHook?.Disable();
         requestDataHook?.Dispose();
 
-        endRequestHook?.Disable();
         endRequestHook?.Dispose();
 
-        hookZoneDown?.Disable();
         hookZoneDown?.Dispose();
 
-        hookZoneUp?.Disable();
         hookZoneUp?.Dispose();
 
-        fireCallbackHook?.Disable();
         fireCallbackHook?.Dispose();
 
         GC.SuppressFinalize(this);
@@ -160,7 +153,7 @@ public class InfoProxyManager : IDisposable
 #endif
     }
 
-    public unsafe void OnTerritoryChanged(ushort id)
+    public unsafe void OnTerritoryChanged(uint id)
     {
 #if DEBUG
         Plugin.Log.Debug($"Territory Changed : {id} // wasAllowed:{wasAllowed}");
@@ -374,7 +367,7 @@ public class InfoProxyManager : IDisposable
         {
             return ret;
         }
-        if (values->Type != ValueType.Int)
+        if (values->Type != AtkValueType.Int)
         {
             return ret;
         }

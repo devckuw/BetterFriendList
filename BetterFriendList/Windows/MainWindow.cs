@@ -229,7 +229,7 @@ public unsafe class MainWindow : Window, IDisposable
             {
                 if (Plugin.PartyList.Count > 1)
                     //isLeader = Plugin.PartyList[(int)Plugin.PartyList.PartyLeaderIndex].ContentId == (long)GetContentId(Plugin.ClientState.LocalPlayer);
-                    isLeader = Plugin.PartyList[(int)Plugin.PartyList.PartyLeaderIndex].ContentId == (long)Plugin.PlayerState.ContentId;
+                    isLeader = Plugin.PartyList[(int)Plugin.PartyList.PartyLeaderIndex].ContentId == Plugin.PlayerState.ContentId;
 
                 if (InfoProxyCrossRealm.IsCrossRealmParty())
                 {
@@ -1265,7 +1265,7 @@ public unsafe class MainWindow : Window, IDisposable
 
             bool isLeader = true;
             if (Plugin.PartyList.Count > 1)
-                isLeader = Plugin.PartyList[(int)Plugin.PartyList.PartyLeaderIndex].ContentId == (long)Plugin.PlayerState.ContentId;
+                isLeader = Plugin.PartyList[(int)Plugin.PartyList.PartyLeaderIndex].ContentId == Plugin.PlayerState.ContentId;
 
             // tp house / invite grp / pf / send tell / adventurer plate / info
             bool[] _actions = [false, false, false, false, false, false];
