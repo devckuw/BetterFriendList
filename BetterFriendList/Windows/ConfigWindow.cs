@@ -34,7 +34,7 @@ public class ConfigWindow : Window, IDisposable
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(390, 275);
+        Size = new Vector2(420, 275);
         SizeCondition = ImGuiCond.Always;
 
         Configuration = p.Configuration;
@@ -254,6 +254,7 @@ public class ConfigWindow : Window, IDisposable
                 }
             }
         }
+        ImGui.Text("If you get problem with scaling,\nUNCHECK 'fixed column size'\nand resize stuff as you like.");
     }
 
     public unsafe bool ImportColors()
