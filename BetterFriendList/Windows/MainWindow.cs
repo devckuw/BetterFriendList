@@ -82,7 +82,7 @@ public unsafe class MainWindow : Window, IDisposable
         SizeConstraints = new WindowSizeConstraints
         {
             MinimumSize = new Vector2(520, 330),
-            MaximumSize = new Vector2(760, float.MaxValue)
+            MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
         Plugin = plugin;
@@ -127,6 +127,18 @@ public unsafe class MainWindow : Window, IDisposable
     {
         var chara = (Character*)player.Address;
         return chara == null ? 0 : chara->ContentId;
+    }
+
+    private Vector2 CalculateRequiredSize(int numberOfButtons)
+    {
+        var style = ImGui.GetStyle();
+        var buttonSize = (new Vector2(27, 20) * ImGuiHelpers.GlobalScale);// + style.FramePadding * 2.0f;
+        var spacing = style.ItemSpacing.X * (numberOfButtons - 1);
+        var windowPadding = style.WindowPadding * 0f;//* 2.0f;
+
+        var width = buttonSize.X * numberOfButtons + spacing + windowPadding.X;
+        var height = buttonSize.Y + windowPadding.Y;
+        return new Vector2(width, height);
     }
 
     public unsafe void DrawOnlineStatus()
@@ -195,23 +207,24 @@ public unsafe class MainWindow : Window, IDisposable
         {
             if (Plugin.Configuration.FixedColumnSize)
             {
-                ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 150);
-                ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 167);
-                ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-                ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 210);
-                ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 70);
-                ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 30);
+                ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 20);
+                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 150);
+                //ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 167);
+                ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, CalculateRequiredSize(5).X);
+                ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 20);
+                ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 210);
+                ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 70);
+                ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * ImGui.CalcTextSize("JEDF").X);
             }
             else
             {
-                ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.None, 20);
-                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.None, 150);
-                ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.None, 167);
-                ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.None, 20);
-                ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.None, 210);
-                ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.None, 70);
-                ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.None, 30);
+                ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.None, ImGuiHelpers.GlobalScale * 20);
+                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.None, ImGuiHelpers.GlobalScale * 150);
+                ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.None, CalculateRequiredSize(5).X);
+                ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.None, ImGuiHelpers.GlobalScale * 20);
+                ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.None, ImGuiHelpers.GlobalScale * 210);
+                ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.None, ImGuiHelpers.GlobalScale * 70);
+                ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.None, ImGuiHelpers.GlobalScale * ImGui.CalcTextSize("JEDF").X);
             }
 
             ImGui.TableHeadersRow();
@@ -475,10 +488,10 @@ public unsafe class MainWindow : Window, IDisposable
                         Plugin.Configuration.Save();
                     }
 
-                    ImGui.SetCursorPos(new Vector2(290, 150));
+                    ImGui.SetCursorPos(ImGuiHelpers.ScaledVector2(290, 150));
                     ImGui.Text("Write notes about your friend\nNotes appear on mouse over");
 
-                    ImGui.SetCursorPos(new Vector2(490, 155));
+                    ImGui.SetCursorPos(ImGuiHelpers.ScaledVector2(490, 155));
                     if (ImGui.Button($"LodeStone##lodeStone{i}"))
                     {
                         lodeStoneService.OpenLodestoneProfile(friend->NameString, friendHomeWorld.Name.ExtractText());
@@ -507,7 +520,7 @@ public unsafe class MainWindow : Window, IDisposable
                 }
                 if (houseFlag)
                 {
-                    ImGui.Dummy(new Vector2(27, 20));
+                    ImGuiHelpers.ScaledDummy(27, 20);
                 }
                 ImGui.SameLine();
                 if (friend->State == 0 ||
@@ -523,7 +536,7 @@ public unsafe class MainWindow : Window, IDisposable
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy) ||
                     (!isLeader  && !friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers)))
                 {
-                    ImGui.Dummy(new Vector2(27, 20));
+                    ImGuiHelpers.ScaledDummy(27, 20);
                 }
                 else
                 {
@@ -557,7 +570,7 @@ public unsafe class MainWindow : Window, IDisposable
                 if (friend->State == 0 || !friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter) ||
                     friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.AnotherWorld) || friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Busy))
                 {
-                    ImGui.Dummy(new Vector2(27, 20));
+                    ImGuiHelpers.ScaledDummy(27, 20);
                 }
                 else
                 {
@@ -571,7 +584,7 @@ public unsafe class MainWindow : Window, IDisposable
                 ImGui.SameLine();
                 if (!friendCurrentWorld.DataCenter.Value.Name.ExtractText().Contains(playerDataCenter))
                 {
-                    ImGui.Dummy(new Vector2(27, 20));
+                    ImGuiHelpers.ScaledDummy(27, 20);
                 }
                 else
                 {
@@ -584,7 +597,7 @@ public unsafe class MainWindow : Window, IDisposable
                 ImGui.SameLine();
                 if (friend->CurrentWorld != playerWorld)
                 {
-                    ImGui.Dummy(new Vector2(27, 20));
+                    ImGuiHelpers.ScaledDummy(27, 20);
                 }
                 else
                 {
@@ -767,23 +780,23 @@ public unsafe class MainWindow : Window, IDisposable
         {
             if (Plugin.Configuration.FixedColumnSize)
             {
-                ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 150);
-                ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 167);
-                ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-                ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 210);
-                ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 70);
-                ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 30);
+                ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 20);
+                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 150);
+                ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 167);
+                ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 20);
+                ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 210);
+                ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 70);
+                ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 30);
             }
             else
             {
-                ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.None, 20);
-                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.None, 150);
-                ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.None, 167);
-                ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.None, 20);
-                ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.None, 210);
-                ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.None, 70);
-                ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.None, 30);
+                ImGui.TableSetupColumn("Grp", ImGuiTableColumnFlags.None, ImGuiHelpers.GlobalScale * 20);
+                ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.None, ImGuiHelpers.GlobalScale * 150);
+                ImGui.TableSetupColumn("Action", ImGuiTableColumnFlags.None, ImGuiHelpers.GlobalScale * 167);
+                ImGui.TableSetupColumn("Job", ImGuiTableColumnFlags.None, ImGuiHelpers.GlobalScale * 20);
+                ImGui.TableSetupColumn("Location", ImGuiTableColumnFlags.None, ImGuiHelpers.GlobalScale * 210);
+                ImGui.TableSetupColumn("Company", ImGuiTableColumnFlags.None, ImGuiHelpers.GlobalScale * 70);
+                ImGui.TableSetupColumn("Lang", ImGuiTableColumnFlags.None, ImGuiHelpers.GlobalScale * 30);
             }
 
             ImGui.TableHeadersRow();
@@ -874,10 +887,10 @@ public unsafe class MainWindow : Window, IDisposable
                         Plugin.Configuration.Save();
                     }
 
-                    ImGui.SetCursorPos(new Vector2(290, 150));
+                    ImGui.SetCursorPos(ImGuiHelpers.ScaledVector2(290, 150));
                     ImGui.Text("Write notes about your friend\nNotes appear on mouse over");
 
-                    ImGui.SetCursorPos(new Vector2(490, 155));
+                    ImGui.SetCursorPos(ImGuiHelpers.ScaledVector2(490, 155));
                     if (ImGui.Button($"LodeStone##lodeStone{i}"))
                     {
                         lodeStoneService.OpenLodestoneProfile(entry.name, entry.homeWorld);
@@ -956,15 +969,15 @@ public unsafe class MainWindow : Window, IDisposable
     {
         if (ImGui.BeginTable("friends", 9))
         {
-            ImGui.TableSetupColumn("  All", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("  ★", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("  ●", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("  ▲", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("  ♦", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("  ♥", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("  ♠", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("  ♣", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 20);
-            ImGui.TableSetupColumn("None", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, 35);
+            ImGui.TableSetupColumn("  All", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 20);
+            ImGui.TableSetupColumn("  ★", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 20);
+            ImGui.TableSetupColumn("  ●", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 20);
+            ImGui.TableSetupColumn("  ▲", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 20);
+            ImGui.TableSetupColumn("  ♦", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 20);
+            ImGui.TableSetupColumn("  ♥", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 20);
+            ImGui.TableSetupColumn("  ♠", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 20);
+            ImGui.TableSetupColumn("  ♣", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 20);
+            ImGui.TableSetupColumn("None", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, ImGuiHelpers.GlobalScale * 35);
 
             ImGui.TableHeadersRow();
 
@@ -1491,7 +1504,7 @@ public unsafe class MainWindow : Window, IDisposable
 
     private void DrawSettingsAbove()
     {
-        ImGui.BeginChild("settingsleft", new Vector2(220,50));
+        ImGui.BeginChild("settingsleft", ImGuiHelpers.ScaledVector2(220,50));
         ImGui.SetNextItemWidth(210);
         ImGui.InputTextWithHint("", "Name..", ref nameRegex, 32);
         if (ImGui.Button("Reset")) { nameRegex = string.Empty; grpDisplay = (int)Grp.All; }
@@ -1502,7 +1515,7 @@ public unsafe class MainWindow : Window, IDisposable
         ImGui.EndChild();
 
         ImGui.SameLine();
-        ImGui.BeginChild("settingsright", new Vector2(270, 50));
+        ImGui.BeginChild("settingsright", ImGuiHelpers.ScaledVector2(270, 50));
         DrawGroupTable();
         ImGui.EndChild();
         /*unsafe {
