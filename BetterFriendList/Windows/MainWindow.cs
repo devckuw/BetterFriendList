@@ -1455,6 +1455,58 @@ public unsafe class MainWindow : Window, IDisposable
                     sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->Group).ToList();
                 }
                 break;
+            case Sorting.CurrentWorld:
+                if (onlineFirst)
+                {
+                    sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld).ToList();
+                }
+                else
+                {
+                    sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld).ToList();
+                }
+                break;
+            case Sorting.CurrentArea:
+                if (onlineFirst)
+                {
+                    sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->Location).ToList();
+                }
+                else
+                {
+                    sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->Location).ToList();
+                }
+                break;
+            case Sorting.FCTag:
+                if (onlineFirst)
+                {
+                    sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->FCTagString).ToList();
+                }
+                else
+                {
+                    sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->FCTagString).ToList();
+                }
+                break;
+            case Sorting.Job:
+                if (onlineFirst)
+                {
+                    sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->Job).ToList();
+                }
+                else
+                {
+                    sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->Job).ToList();
+                }
+                break;
             default:
                 sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->NameString).ToList();
                 break;
@@ -1493,7 +1545,7 @@ public unsafe class MainWindow : Window, IDisposable
     private void ContextMenuSettings()
     {
         ImGui.SetNextItemWidth(210);
-        ImGui.InputTextWithHint("", "Name..", ref nameRegex, 32);
+        ImGui.InputTextWithHint("##settingNameRegexContext", "Name..", ref nameRegex, 32);
         ImGui.SameLine();
         if (ImGui.Button("Reset")) { nameRegex = string.Empty; grpDisplay = (int)Grp.All; }
         DrawGroupTable();
@@ -1506,7 +1558,7 @@ public unsafe class MainWindow : Window, IDisposable
     {
         ImGui.BeginChild("settingsleft", ImGuiHelpers.ScaledVector2(220,50));
         ImGui.SetNextItemWidth(210);
-        ImGui.InputTextWithHint("", "Name..", ref nameRegex, 32);
+        ImGui.InputTextWithHint("##settingNameRegexAbove", "Name..", ref nameRegex, 32);
         if (ImGui.Button("Reset")) { nameRegex = string.Empty; grpDisplay = (int)Grp.All; }
         ImGui.SameLine();
         DrawSortingCombo();

@@ -152,7 +152,11 @@ public enum Sorting
     Alphabetical = 2,
     HomeWorld = 3,
     Color = 4,
-    Group = 5
+    Group = 5,
+    CurrentWorld = 6,
+    CurrentArea = 7,
+    FCTag = 8,
+    Job = 9
 }
 
 public enum Icons
