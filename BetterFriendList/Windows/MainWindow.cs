@@ -176,6 +176,10 @@ public unsafe class MainWindow : Window, IDisposable
         var agent = AgentFriendlist.Instance();
         if (agent == null) return;
         if (agent->InfoProxy == null) return;
+        var atkStage = FFXIVClientStructs.FFXIV.Component.GUI.AtkStage.Instance();
+        if (atkStage == null) return;
+        var friendsNumberData = atkStage->GetNumberArrayData(FFXIVClientStructs.FFXIV.Component.GUI.NumberArrayType.FriendList);
+        if (friendsNumberData == null) return;
 
         if (agent->InfoProxy->EntryCount == 0)
         {
@@ -265,6 +269,7 @@ public unsafe class MainWindow : Window, IDisposable
                 var i = ind.index;
                 var friend = agent->InfoProxy->GetEntry(i);
                 if (friend == null) continue;
+                //Plugin.Log.Debug($"{friendsNumberData->IntArray[i*12+1]}");
 
                 var name = friend->NameString;
                 if (!name.ToLower().Contains(nameRegex.ToLower())) continue;
@@ -1459,12 +1464,14 @@ public unsafe class MainWindow : Window, IDisposable
                 if (onlineFirst)
                 {
                     sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
-                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenByDescending(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  0)
                         .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld).ToList();
                 }
                 else
                 {
-                    sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                    sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  0)
                         .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld).ToList();
                 }
                 break;
@@ -1472,12 +1479,14 @@ public unsafe class MainWindow : Window, IDisposable
                 if (onlineFirst)
                 {
                     sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
-                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenByDescending(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->Location ==  0)
                         .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->Location).ToList();
                 }
                 else
                 {
-                    sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                    sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->Location ==  0)
                         .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->Location).ToList();
                 }
                 break;
@@ -1485,12 +1494,12 @@ public unsafe class MainWindow : Window, IDisposable
                 if (onlineFirst)
                 {
                     sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
-                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->FCTagString ==  string.Empty)
                         .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->FCTagString).ToList();
                 }
                 else
                 {
-                    sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
+                    sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->FCTagString ==  string.Empty)
                         .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->FCTagString).ToList();
                 }
                 break;
@@ -1498,13 +1507,13 @@ public unsafe class MainWindow : Window, IDisposable
                 if (onlineFirst)
                 {
                     sortedIndexes = indexes.OrderByDescending(x => agent->InfoProxy->GetEntry(x.index)->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online))
-                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
-                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->Job).ToList();
+                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld !=  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenByDescending(x => agent->InfoProxy->GetEntry(x.index)->Job).ToList();
                 }
                 else
                 {
-                    sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld ==  Plugin.PlayerState.CurrentWorld.RowId)
-                        .ThenBy(x => agent->InfoProxy->GetEntry(x.index)->Job).ToList();
+                    sortedIndexes = indexes.OrderBy(x => agent->InfoProxy->GetEntry(x.index)->CurrentWorld !=  Plugin.PlayerState.CurrentWorld.RowId)
+                        .ThenByDescending(x => agent->InfoProxy->GetEntry(x.index)->Job).ToList();
                 }
                 break;
             default:
