@@ -206,5 +206,6 @@ public enum Icons
     RPR = 166,
     SGE = 167,
     VRP = 170,
-    PCT = 171
+    PCT = 171,
+    BST = 183
 }

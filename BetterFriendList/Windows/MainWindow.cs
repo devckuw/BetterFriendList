@@ -627,8 +627,11 @@ public unsafe class MainWindow : Window, IDisposable
                         case < 41:
                             ImGuiHelpers.CompileSeStringWrapped(((Icons)job.RowId + 127).toBaliseString());
                             break;
-                        default:
+                        case < 43:
                             ImGuiHelpers.CompileSeStringWrapped(((Icons)job.RowId + 129).toBaliseString());
+                            break;
+                        default:
+                            ImGuiHelpers.CompileSeStringWrapped(((Icons)job.RowId + 140).toBaliseString());
                             break;
                     }
 
