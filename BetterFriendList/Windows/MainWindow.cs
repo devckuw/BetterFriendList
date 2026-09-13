@@ -462,14 +462,14 @@ public unsafe class MainWindow : Window, IDisposable
                 {
                     ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
                 }
-                ImGui.PushID($"{498 + i}");
+                ImGui.PushID($"{friend->ContentId}");
                 if (ImGui.IsItemClicked())
                 {
                     color = Plugin.Configuration.FriendsColors[friend->ContentId].AsVector3();
                     note = Plugin.Configuration.FriendNotes[friend->ContentId];
-                    ImGui.OpenPopup($"FriendContextMenu##{i}");
+                    ImGui.OpenPopup($"FriendContextMenu##{friend->ContentId}");
                 }
-                if (ImGui.BeginPopup($"FriendContextMenu##{i}"))
+                if (ImGui.BeginPopup($"FriendContextMenu##{friend->ContentId}"))
                 {
                     // to be added later maybe
                     /*if (ImGui.Button("ls")) { }
@@ -480,14 +480,14 @@ public unsafe class MainWindow : Window, IDisposable
                     ImGui.SameLine();
                     if (ImGui.Button("del friend")) { }*/
                     //ImGui.BeginChild("friendcontextmenuleft", new Vector2(300,300), true);
-                    if (ImGui.ColorPicker3($"##colorpicker{i}", ref color, ImGuiColorEditFlags.NoSidePreview | ImGuiColorEditFlags.DisplayRgb | ImGuiColorEditFlags.DisplayHex))
+                    if (ImGui.ColorPicker3($"##colorpicker{friend->ContentId}", ref color, ImGuiColorEditFlags.NoSidePreview | ImGuiColorEditFlags.DisplayRgb | ImGuiColorEditFlags.DisplayHex))
                     {
                         Plugin.Configuration.FriendsColors[friend->ContentId] = new Vector4(color, 1);
                         Plugin.Configuration.Save();
                     }
                     ImGui.SameLine();
 
-                    if (ImGui.InputTextMultiline($"##multitext{i}", ref note))
+                    if (ImGui.InputTextMultiline($"##multitext{friend->ContentId}", ref note))
                     {
                         Plugin.Configuration.FriendNotes[friend->ContentId] = note;
                         Plugin.Configuration.Save();
@@ -497,7 +497,7 @@ public unsafe class MainWindow : Window, IDisposable
                     ImGui.Text("Write notes about your friend\nNotes appear on mouse over");
 
                     ImGui.SetCursorPos(ImGuiHelpers.ScaledVector2(490, 155));
-                    if (ImGui.Button($"LodeStone##lodeStone{i}"))
+                    if (ImGui.Button($"LodeStone##lodeStone{friend->ContentId}"))
                     {
                         lodeStoneService.OpenLodestoneProfile(friend->NameString, friendHomeWorld.Name.ExtractText());
                     }
@@ -516,7 +516,7 @@ public unsafe class MainWindow : Window, IDisposable
                     //if (Plugin.ClientState.LocalPlayer.CurrentWorld.RowId == friend->HomeWorld)
                     {
                         houseFlag = false;
-                        if (ImGuiComponents.IconButton($"buttontphouse{i}", FontAwesomeIcon.HouseChimney, new Vector2(27, 20)))
+                        if (ImGuiComponents.IconButton($"buttontphouse{friend->ContentId}", FontAwesomeIcon.HouseChimney, new Vector2(27, 20)))
                         {
                             agent->OpenFriendEstateTeleportation(friend->ContentId);
                         }
@@ -547,7 +547,7 @@ public unsafe class MainWindow : Window, IDisposable
                 {
                     if (friend->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.RecruitingPartyMembers))
                     {
-                        if (ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.UsersViewfinder, new Vector2(27, 20)))
+                        if (ImGuiComponents.IconButton($"buttoninvite{friend->ContentId}", FontAwesomeIcon.UsersViewfinder, new Vector2(27, 20)))
                         {
                             if (AgentLookingForGroup.Instance() != null)
                                 AgentLookingForGroup.Instance()->OpenListingByContentId(friend->ContentId);
@@ -556,7 +556,7 @@ public unsafe class MainWindow : Window, IDisposable
                     }
                     else
                     {
-                        if (ImGuiComponents.IconButton($"buttoninvite{i}", FontAwesomeIcon.PeopleGroup, new Vector2(27, 20)))
+                        if (ImGuiComponents.IconButton($"buttoninvite{friend->ContentId}", FontAwesomeIcon.PeopleGroup, new Vector2(27, 20)))
                         {
                             //invite;
                             if (friend->CurrentWorld == playerWorld)
@@ -579,7 +579,7 @@ public unsafe class MainWindow : Window, IDisposable
                 }
                 else
                 {
-                    if (ImGuiComponents.IconButton($"buttondm{i}", FontAwesomeIcon.Comment, new Vector2(27, 20)))
+                    if (ImGuiComponents.IconButton($"buttondm{friend->ContentId}", FontAwesomeIcon.Comment, new Vector2(27, 20)))
                     {
                         dmTargetName = friend->NameString;
                         dmTargetWorld = friendHomeWorld.Name.ExtractText();
@@ -593,7 +593,7 @@ public unsafe class MainWindow : Window, IDisposable
                 }
                 else
                 {
-                    if (ImGuiComponents.IconButton($"buttonadventurer{i}", FontAwesomeIcon.ListAlt, new Vector2(27, 20)))
+                    if (ImGuiComponents.IconButton($"buttonadventurer{friend->ContentId}", FontAwesomeIcon.ListAlt, new Vector2(27, 20)))
                     {
                         GameFunctions.TryOpenAdventurerPlate(friend->ContentId);
                     }
@@ -606,7 +606,7 @@ public unsafe class MainWindow : Window, IDisposable
                 }
                 else
                 {
-                    if (ImGuiComponents.IconButton($"buttoninfo{i}", FontAwesomeIcon.Info, new Vector2(27, 20)))
+                    if (ImGuiComponents.IconButton($"buttoninfo{friend->ContentId}", FontAwesomeIcon.Info, new Vector2(27, 20)))
                     {
                         GameFunctions.OpenSearchInfo(friend);
                     }
@@ -658,7 +658,7 @@ public unsafe class MainWindow : Window, IDisposable
                     if (canRefreshSolo)
                     {
                         ImGui.SameLine();
-                        if (ImGuiComponents.IconButton($"try refresh solo##{i}", FontAwesomeIcon.Recycle))
+                        if (ImGuiComponents.IconButton($"try refresh solo##{friend->ContentId}", FontAwesomeIcon.Recycle))
                         {
                             string grpSign = "";
                             switch (friend->Group)
@@ -873,23 +873,23 @@ public unsafe class MainWindow : Window, IDisposable
                 {
                     ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
                 }
-                ImGui.PushID($"{498 + i}");
+                ImGui.PushID($"{entry.contentId}");
                 if (ImGui.IsItemClicked())
                 {
                     color = Plugin.Configuration.FriendsColors[entry.contentId].AsVector3();
                     note = Plugin.Configuration.FriendNotes[entry.contentId];
-                    ImGui.OpenPopup($"FriendContextMenu##{i}");
+                    ImGui.OpenPopup($"FriendContextMenu##{entry.contentId}");
                 }
-                if (ImGui.BeginPopup($"FriendContextMenu##{i}"))
+                if (ImGui.BeginPopup($"FriendContextMenu##{entry.contentId}"))
                 {
-                    if (ImGui.ColorPicker3($"##colorpicker{i}", ref color, ImGuiColorEditFlags.NoSidePreview | ImGuiColorEditFlags.DisplayRgb | ImGuiColorEditFlags.DisplayHex))
+                    if (ImGui.ColorPicker3($"##colorpicker{entry.contentId}", ref color, ImGuiColorEditFlags.NoSidePreview | ImGuiColorEditFlags.DisplayRgb | ImGuiColorEditFlags.DisplayHex))
                     {
                         Plugin.Configuration.FriendsColors[entry.contentId] = new Vector4(color, 1);
                         Plugin.Configuration.Save();
                     }
                     ImGui.SameLine();
 
-                    if (ImGui.InputTextMultiline($"##multitext{i}", ref note))
+                    if (ImGui.InputTextMultiline($"##multitext{entry.contentId}", ref note))
                     {
                         Plugin.Configuration.FriendNotes[entry.contentId] = note;
                         Plugin.Configuration.Save();
@@ -899,7 +899,7 @@ public unsafe class MainWindow : Window, IDisposable
                     ImGui.Text("Write notes about your friend\nNotes appear on mouse over");
 
                     ImGui.SetCursorPos(ImGuiHelpers.ScaledVector2(490, 155));
-                    if (ImGui.Button($"LodeStone##lodeStone{i}"))
+                    if (ImGui.Button($"LodeStone##lodeStone{entry.contentId}"))
                     {
                         lodeStoneService.OpenLodestoneProfile(entry.name, entry.homeWorld);
                     }
@@ -1236,8 +1236,11 @@ public unsafe class MainWindow : Window, IDisposable
                     case < 41:
                         jobString = ((Icons)jobSheet.RowId + 127).toBaliseString();
                         break;
-                    default:;
+                    case < 43:
                         jobString = ((Icons)jobSheet.RowId + 129).toBaliseString();
+                        break;
+                    default:;
+                        jobString = ((Icons)jobSheet.RowId + 140).toBaliseString();
                         break;
                 }
 
