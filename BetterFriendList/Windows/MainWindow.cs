@@ -272,6 +272,10 @@ public unsafe class MainWindow : Window, IDisposable
                 //Plugin.Log.Debug($"{friendsNumberData->IntArray[i*12+1]}");
 
                 var name = friend->NameString;
+                if (name.Length == 0)
+                {
+                    name = "(Unable to Retrieve)";
+                }
                 if (!name.ToLower().Contains(nameRegex.ToLower())) continue;
 
                 if (!Plugin.Configuration.FriendsColors.ContainsKey(friend->ContentId))
@@ -1222,6 +1226,12 @@ public unsafe class MainWindow : Window, IDisposable
             string grpString = GetGroupString(proxyEntry->Group);
             var _nameWithGrp = grpString + proxyEntry->NameString;
 
+            var name = proxyEntry->NameString;
+            if (name.Length == 0)
+            {
+                name = "(Unable to Retrieve)";
+            }
+
             if (!Plugin.DataManager.GetExcelSheet<ClassJob>().TryGetRow(proxyEntry->Job, out var jobSheet))
             {
                 jobString = string.Empty;
@@ -1351,7 +1361,7 @@ public unsafe class MainWindow : Window, IDisposable
                 status,
                 proxyEntry->State.HasFlag(InfoProxyCommonList.CharacterData.OnlineStatus.Online),
                 statusId,
-                proxyEntry->NameString,
+                name,
                 _nameWithGrp,
                 _actions,
                 jobString,
